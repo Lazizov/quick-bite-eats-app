@@ -136,14 +136,14 @@
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 2rem;
-            opacity: 0;
-            transform: translateY(20px);
+            opacity: 1;
+            transform: translateY(0);
             transition: all 0.5s ease;
         }
 
-        .menu-items.show {
-            opacity: 1;
-            transform: translateY(0);
+        .menu-items.hide {
+            opacity: 0;
+            transform: translateY(20px);
         }
 
         .menu-item {
@@ -152,6 +152,11 @@
             overflow: hidden;
             box-shadow: 0 5px 15px rgba(0,0,0,0.1);
             transition: all 0.3s ease;
+            display: block;
+        }
+
+        .menu-item.hidden {
+            display: none;
         }
 
         .menu-item:hover {
@@ -438,13 +443,29 @@
             scroll-behavior: smooth;
         }
 
-        /* Hide menu items initially */
-        .menu-items {
-            display: none;
+        /* Loading animation */
+        .loading {
+            opacity: 0.7;
+            pointer-events: none;
         }
 
-        .menu-items.active {
-            display: grid;
+        /* Success message */
+        .success-message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #4CAF50;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
+            z-index: 3000;
+            transform: translateX(300px);
+            transition: transform 0.3s ease;
+        }
+
+        .success-message.show {
+            transform: translateX(0);
         }
     </style>
 </head>
@@ -502,10 +523,10 @@
             </div>
 
             <!-- Menu Items -->
-            <div class="menu-items active" id="menu-items">
+            <div class="menu-items" id="menu-items">
                 <!-- Хлебные изделия -->
                 <div class="menu-item" data-category="bread">
-                    <div class="item-image">Фото хлебных изделий</div>
+                    <div class="item-image">Фото лепешки тандырной</div>
                     <div class="item-content">
                         <div class="item-name">Лепешка тандырная</div>
                         <div class="item-description">Свежая лепешка из тандыра</div>
@@ -950,43 +971,61 @@
         </div>
     </div>
 
+    <!-- Success message -->
+    <div class="success-message" id="success-message">
+        Товар добавлен в корзину!
+    </div>
+
     <script>
         let cart = [];
         let currentItem = {};
 
+        // Scroll to menu function
         function scrollToMenu() {
             document.getElementById('menu').scrollIntoView({ behavior: 'smooth' });
         }
 
         // Category filtering
-        document.querySelectorAll('.category-item').forEach(item => {
-            item.addEventListener('click', function() {
-                // Remove active class from all categories
-                document.querySelectorAll('.category-item').forEach(cat => cat.classList.remove('active'));
-                // Add active to clicked category
-                this.classList.add('active');
+        document.addEventListener('DOMContentLoaded', function() {
+            const categoryItems = document.querySelectorAll('.category-item');
+            
+            categoryItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    // Remove active class from all categories
+                    categoryItems.forEach(cat => cat.classList.remove('active'));
+                    // Add active to clicked category
+                    this.classList.add('active');
 
-                const category = this.dataset.category;
-                filterMenuItems(category);
+                    const category = this.dataset.category;
+                    filterMenuItems(category);
+                });
             });
+
+            // Initialize with smooth animation
+            setTimeout(() => {
+                filterMenuItems('all');
+            }, 500);
         });
 
         function filterMenuItems(category) {
             const menuItems = document.querySelectorAll('.menu-item');
             const menuContainer = document.getElementById('menu-items');
             
-            menuContainer.classList.remove('show');
+            // Add loading state
+            menuContainer.classList.add('loading');
             
             setTimeout(() => {
                 menuItems.forEach(item => {
                     if (category === 'all' || item.dataset.category === category) {
-                        item.style.display = 'block';
+                        item.classList.remove('hidden');
                     } else {
-                        item.style.display = 'none';
+                        item.classList.add('hidden');
                     }
                 });
-                menuContainer.classList.add('show');
-            }, 300);
+                
+                // Remove loading state
+                menuContainer.classList.remove('loading');
+            }, 200);
         }
 
         function addToCart(name, price) {
@@ -1030,24 +1069,35 @@
             
             updateCartCount();
             closeModal();
-            
-            // Show success message
-            alert(`${currentItem.name} добавлен в корзину!`);
+            showSuccessMessage(`${currentItem.name} добавлен в корзину!`);
         }
 
         function updateCartCount() {
             const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
             document.getElementById('cart-count').textContent = totalItems;
+            
+            // Save cart to localStorage
+            localStorage.setItem('restaurantCart', JSON.stringify(cart));
+        }
+
+        function showSuccessMessage(message) {
+            const successMessage = document.getElementById('success-message');
+            successMessage.textContent = message;
+            successMessage.classList.add('show');
+            
+            setTimeout(() => {
+                successMessage.classList.remove('show');
+            }, 3000);
         }
 
         function openCart() {
             if (cart.length === 0) {
-                alert('Корзина пуста');
+                showSuccessMessage('Корзина пуста');
                 return;
             }
             
             // Create cart window
-            const cartWindow = window.open('', '_blank', 'width=500,height=600,scrollbars=yes');
+            const cartWindow = window.open('', '_blank', 'width=500,height=600,scrollbars=yes,resizable=yes');
             cartWindow.document.write(generateCartHTML());
             cartWindow.document.close();
         }
@@ -1061,7 +1111,7 @@
                     <div class="cart-item">
                         <div class="item-info">
                             <div class="item-name">${item.name}</div>
-                            <div class="item-price">${item.price} ₸ x ${item.quantity}</div>
+                            <div class="item-price">${item.price} ₸ x ${item.quantity} = ${item.price * item.quantity} ₸</div>
                         </div>
                         <div class="item-controls">
                             <button onclick="updateCartItem(${index}, -1)">-</button>
@@ -1078,6 +1128,8 @@
                 <html>
                 <head>
                     <title>Корзина - Каусар</title>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
                     <style>
                         body {
                             font-family: Arial, sans-serif;
@@ -1098,6 +1150,7 @@
                             display: flex;
                             justify-content: space-between;
                             align-items: center;
+                            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
                         }
                         .item-name {
                             font-weight: bold;
@@ -1105,6 +1158,12 @@
                         }
                         .item-price {
                             color: #666;
+                            font-size: 0.9rem;
+                        }
+                        .item-controls {
+                            display: flex;
+                            align-items: center;
+                            gap: 5px;
                         }
                         .item-controls button {
                             background: #4CAF50;
@@ -1114,7 +1173,11 @@
                             height: 30px;
                             border-radius: 50%;
                             cursor: pointer;
-                            margin: 0 5px;
+                            transition: all 0.3s ease;
+                        }
+                        .item-controls button:hover {
+                            background: #45a049;
+                            transform: scale(1.1);
                         }
                         .total {
                             background: #4CAF50;
@@ -1125,12 +1188,14 @@
                             font-size: 1.2rem;
                             font-weight: bold;
                             margin: 20px 0;
+                            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
                         }
                         .order-form {
                             background: white;
                             padding: 20px;
                             border-radius: 8px;
                             margin-top: 20px;
+                            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
                         }
                         .form-group {
                             margin-bottom: 15px;
@@ -1139,13 +1204,19 @@
                             display: block;
                             margin-bottom: 5px;
                             font-weight: bold;
+                            color: #333;
                         }
-                        .form-group input {
+                        .form-group input, .form-group textarea {
                             width: 100%;
                             padding: 10px;
                             border: 2px solid #ddd;
                             border-radius: 5px;
                             font-size: 1rem;
+                            transition: border-color 0.3s ease;
+                        }
+                        .form-group input:focus, .form-group textarea:focus {
+                            outline: none;
+                            border-color: #4CAF50;
                         }
                         .order-btn {
                             background: #4CAF50;
@@ -1157,88 +1228,184 @@
                             cursor: pointer;
                             width: 100%;
                             margin-top: 10px;
+                            transition: all 0.3s ease;
                         }
                         .order-btn:hover {
                             background: #45a049;
+                            transform: translateY(-2px);
+                            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);
+                        }
+                        .empty-cart {
+                            text-align: center;
+                            color: #666;
+                            font-size: 1.2rem;
+                            margin: 50px 0;
+                        }
+                        @media (max-width: 480px) {
+                            body {
+                                padding: 10px;
+                            }
+                            .cart-item {
+                                flex-direction: column;
+                                gap: 10px;
+                            }
+                            .item-controls {
+                                justify-content: center;
+                            }
                         }
                     </style>
                 </head>
                 <body>
                     <h1 class="cart-header">🛒 Ваш заказ</h1>
-                    <div class="cart-items">
-                        ${cartItems}
-                    </div>
-                    <div class="total">
-                        Итого: ${total} ₸
-                    </div>
                     
-                    <div class="order-form">
-                        <h3>Оформление заказа</h3>
-                        <div class="form-group">
-                            <label>Ваше имя:</label>
-                            <input type="text" id="customer-name" required>
+                    ${cart.length > 0 ? `
+                        <div class="cart-items">
+                            ${cartItems}
                         </div>
-                        <div class="form-group">
-                            <label>Номер телефона:</label>
-                            <input type="tel" id="customer-phone" required>
+                        <div class="total">
+                            Итого: ${total.toLocaleString()} ₸
                         </div>
-                        <button class="order-btn" onclick="submitOrder()">Оформить заказ</button>
-                    </div>
+                        
+                        <div class="order-form">
+                            <h3>Оформление заказа</h3>
+                            <div class="form-group">
+                                <label>Ваше имя:</label>
+                                <input type="text" id="customer-name" required placeholder="Введите ваше имя">
+                            </div>
+                            <div class="form-group">
+                                <label>Номер телефона:</label>
+                                <input type="tel" id="customer-phone" required placeholder="+7 (___) ___-__-__">
+                            </div>
+                            <div class="form-group">
+                                <label>Адрес доставки:</label>
+                                <textarea id="customer-address" rows="3" placeholder="Укажите адрес доставки"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label>Комментарий к заказу:</label>
+                                <textarea id="order-comment" rows="2" placeholder="Дополнительные пожелания"></textarea>
+                            </div>
+                            <button class="order-btn" onclick="submitOrder()">Оформить заказ</button>
+                        </div>
+                    ` : `
+                        <div class="empty-cart">
+                            Корзина пуста
+                        </div>
+                    `}
 
                     <script>
                         let cartData = ${JSON.stringify(cart)};
                         
                         function updateCartItem(index, delta) {
-                            cartData[index].quantity += delta;
-                            if (cartData[index].quantity <= 0) {
-                                cartData.splice(index, 1);
+                            if (cartData[index]) {
+                                cartData[index].quantity += delta;
+                                if (cartData[index].quantity <= 0) {
+                                    cartData.splice(index, 1);
+                                }
+                                window.opener.cart = cartData;
+                                window.opener.updateCartCount();
+                                location.reload();
                             }
-                            window.opener.cart = cartData;
-                            window.opener.updateCartCount();
-                            location.reload();
                         }
                         
                         function removeCartItem(index) {
-                            cartData.splice(index, 1);
-                            window.opener.cart = cartData;
-                            window.opener.updateCartCount();
-                            location.reload();
+                            if (cartData[index]) {
+                                cartData.splice(index, 1);
+                                window.opener.cart = cartData;
+                                window.opener.updateCartCount();
+                                location.reload();
+                            }
                         }
                         
                         function submitOrder() {
-                            const name = document.getElementById('customer-name').value;
-                            const phone = document.getElementById('customer-phone').value;
+                            const name = document.getElementById('customer-name').value.trim();
+                            const phone = document.getElementById('customer-phone').value.trim();
+                            const address = document.getElementById('customer-address').value.trim();
+                            const comment = document.getElementById('order-comment').value.trim();
                             
                             if (!name || !phone) {
-                                alert('Пожалуйста, заполните все поля');
+                                alert('Пожалуйста, заполните обязательные поля (имя и телефон)');
                                 return;
                             }
                             
-                            const orderText = 'Новый заказ!\\n' +
-                                'Имя: ' + name + '\\n' +
-                                'Телефон: ' + phone + '\\n\\n' +
-                                'Заказ:\\n' + 
-                                cartData.map(item => '- ' + item.name + ': ' + item.quantity + ' шт. x ' + item.price + ' ₸ = ' + (item.quantity * item.price) + ' ₸').join('\\n') +
-                                '\\n\\nИтого: ' + cartData.reduce((sum, item) => sum + (item.price * item.quantity), 0) + ' ₸';
+                            const orderText = 'Новый заказ из ресторана Каусар!\\n\\n' +
+                                'Клиент: ' + name + '\\n' +
+                                'Телефон: ' + phone + '\\n' +
+                                (address ? 'Адрес: ' + address + '\\n' : '') +
+                                (comment ? 'Комментарий: ' + comment + '\\n' : '') +
+                                '\\nЗаказ:\\n' + 
+                                cartData.map(item => '• ' + item.name + ': ' + item.quantity + ' шт. × ' + item.price + ' ₸ = ' + (item.quantity * item.price) + ' ₸').join('\\n') +
+                                '\\n\\n💰 Итого: ' + cartData.reduce((sum, item) => sum + (item.price * item.quantity), 0).toLocaleString() + ' ₸';
                             
-                            // Здесь можно добавить отправку в Telegram бот
-                            alert('Заказ оформлен!\\n\\n' + orderText);
+                            // Copy to clipboard
+                            navigator.clipboard.writeText(orderText).then(() => {
+                                alert('Заказ скопирован в буфер обмена!\\n\\nВы можете отправить его через любой мессенджер:\\n• WhatsApp: +7 (702) 965 58-68\\n• Telegram\\n• SMS');
+                            }).catch(() => {
+                                alert('Заказ сформирован!\\n\\n' + orderText + '\\n\\nСкопируйте этот текст и отправьте на номер:\\n+7 (702) 965 58-68');
+                            });
                             
-                            // Очистить корзину
+                            // Clear cart
                             window.opener.cart = [];
                             window.opener.updateCartCount();
-                            window.close();
+                            
+                            setTimeout(() => {
+                                window.close();
+                            }, 2000);
                         }
+                        
+                        // Phone number formatting
+                        document.getElementById('customer-phone').addEventListener('input', function(e) {
+                            let value = e.target.value.replace(/\D/g, '');
+                            if (value.length > 0 && value[0] !== '7') {
+                                value = '7' + value;
+                            }
+                            
+                            let formattedValue = '';
+                            if (value.length > 0) {
+                                formattedValue = '+7';
+                                if (value.length > 1) {
+                                    formattedValue += ' (' + value.substring(1, 4);
+                                }
+                                if (value.length > 4) {
+                                    formattedValue += ') ' + value.substring(4, 7);
+                                }
+                                if (value.length > 7) {
+                                    formattedValue += '-' + value.substring(7, 9);
+                                }
+                                if (value.length > 9) {
+                                    formattedValue += '-' + value.substring(9, 11);
+                                }
+                            }
+                            
+                            e.target.value = formattedValue;
+                        });
                     </script>
                 </body>
                 </html>
             `;
         }
 
-        // Initialize
-        setTimeout(() => {
-            document.getElementById('menu-items').classList.add('show');
-        }, 500);
+        // Load cart from localStorage on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedCart = localStorage.getItem('restaurantCart');
+            if (savedCart) {
+                cart = JSON.parse(savedCart);
+                updateCartCount();
+            }
+        });
+
+        // Click outside modal to close
+        document.getElementById('add-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeModal();
+            }
+        });
     </script>
 </body>
 </html>
