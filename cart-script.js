@@ -3,7 +3,7 @@ let cart = [];
 
 // Telegram bot settings - добавьте ваши настройки здесь
 const TELEGRAM_BOT_TOKEN = '8002847512:AAFN6L6xzvdvRLdWUnxII5b0ooUppiLptnA';
-const TELEGRAM_CHAT_ID = 'YOUR_CHAT_ID_HERE';
+const TELEGRAM_CHAT_ID = '758761122';
 
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Cart page loaded');
