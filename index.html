@@ -4,915 +4,283 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Каусар - Обитель комфорта и счастья</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Arial', sans-serif;
-            line-height: 1.6;
-            color: #333;
-            overflow-x: hidden;
-        }
-
-        /* Hero Section */
-        .hero {
-            height: 100vh;
-            background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800"><rect fill="%23f5f5f5" width="1200" height="800"/><text x="600" y="400" text-anchor="middle" font-size="48" fill="%23666">Фоновое изображение ресторана</text></svg>');
-            background-size: cover;
-            background-position: center;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            color: white;
-            position: relative;
-        }
-
-        .logo {
-            font-size: 4rem;
-            color: #4CAF50;
-            margin-bottom: 1rem;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-            font-weight: bold;
-            font-style: italic;
-        }
-
-        .tagline {
-            font-size: 1.5rem;
-            margin-bottom: 2rem;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
-        }
-
-        .menu-btn {
-            background: #4CAF50;
-            color: white;
-            padding: 15px 40px;
-            border: none;
-            border-radius: 50px;
-            font-size: 1.2rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .menu-btn:hover {
-            background: #45a049;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);
-        }
-
-        /* Categories Section */
-        .categories {
-            padding: 4rem 2rem;
-            background: #f8f9fa;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .section-title {
-            text-align: center;
-            font-size: 2.5rem;
-            color: #333;
-            margin-bottom: 3rem;
-        }
-
-        .categories-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 2rem;
-            margin-bottom: 4rem;
-        }
-
-        .category-item {
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .category-item:hover {
-            transform: translateY(-5px);
-        }
-
-        .category-icon {
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #4CAF50, #45a049);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 1rem;
-            color: white;
-            font-size: 2rem;
-            font-weight: bold;
-            transition: all 0.3s ease;
-            border: 4px solid #4CAF50;
-        }
-
-        .category-item.active .category-icon,
-        .category-item:hover .category-icon {
-            background: linear-gradient(135deg, #45a049, #4CAF50);
-            box-shadow: 0 5px 20px rgba(76, 175, 80, 0.4);
-        }
-
-        .category-name {
-            font-size: 1.1rem;
-            font-weight: bold;
-            color: #333;
-        }
-
-        /* Menu Items */
-        .menu-items {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
-            opacity: 1;
-            transform: translateY(0);
-            transition: all 0.5s ease;
-        }
-
-        .menu-items.hide {
-            opacity: 0;
-            transform: translateY(20px);
-        }
-
-        .menu-item {
-            background: white;
-            border-radius: 15px;
-            overflow: hidden;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            transition: all 0.3s ease;
-            display: block;
-        }
-
-        .menu-item.hidden {
-            display: none;
-        }
-
-        .menu-item:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-        }
-
-        .item-image {
-            width: 100%;
-            height: 200px;
-            background: linear-gradient(135deg, #f5f5f5, #e0e0e0);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #999;
-            font-size: 0.9rem;
-        }
-
-        .item-content {
-            padding: 1.5rem;
-        }
-
-        .item-name {
-            font-size: 1.3rem;
-            font-weight: bold;
-            color: #333;
-            margin-bottom: 0.5rem;
-        }
-
-        .item-description {
-            color: #666;
-            margin-bottom: 1rem;
-            font-size: 0.9rem;
-        }
-
-        .item-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .item-price {
-            font-size: 1.4rem;
-            font-weight: bold;
-            color: #4CAF50;
-        }
-
-        .add-to-cart {
-            background: #4CAF50;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 25px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: all 0.3s ease;
-        }
-
-        .add-to-cart:hover {
-            background: #45a049;
-            transform: scale(1.05);
-        }
-
-        /* Cart Button */
-        .cart-btn {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: #4CAF50;
-            color: white;
-            border: none;
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            font-size: 1.5rem;
-            cursor: pointer;
-            box-shadow: 0 5px 20px rgba(76, 175, 80, 0.4);
-            transition: all 0.3s ease;
-            z-index: 1000;
-        }
-
-        .cart-btn:hover {
-            transform: scale(1.1);
-            background: #45a049;
-        }
-
-        .cart-count {
-            position: absolute;
-            top: -5px;
-            right: -5px;
-            background: #f44336;
-            color: white;
-            border-radius: 50%;
-            width: 25px;
-            height: 25px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.8rem;
-            font-weight: bold;
-        }
-
-        /* Modal */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.8);
-            z-index: 2000;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        .modal.show {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 1;
-        }
-
-        .modal-content {
-            background: white;
-            padding: 2rem;
-            border-radius: 15px;
-            max-width: 400px;
-            width: 90%;
-            transform: scale(0.8);
-            transition: transform 0.3s ease;
-        }
-
-        .modal.show .modal-content {
-            transform: scale(1);
-        }
-
-        .modal-header {
-            text-align: center;
-            margin-bottom: 1.5rem;
-        }
-
-        .modal-title {
-            font-size: 1.5rem;
-            color: #333;
-            margin-bottom: 0.5rem;
-        }
-
-        .quantity-control {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 1rem;
-            margin: 1.5rem 0;
-        }
-
-        .qty-btn {
-            background: #4CAF50;
-            color: white;
-            border: none;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            font-size: 1.2rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .qty-btn:hover {
-            background: #45a049;
-        }
-
-        .qty-input {
-            width: 60px;
-            text-align: center;
-            border: 2px solid #ddd;
-            border-radius: 5px;
-            padding: 10px;
-            font-size: 1.1rem;
-        }
-
-        .modal-buttons {
-            display: flex;
-            gap: 1rem;
-            margin-top: 2rem;
-        }
-
-        .btn {
-            flex: 1;
-            padding: 12px;
-            border: none;
-            border-radius: 8px;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .btn-primary {
-            background: #4CAF50;
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: #45a049;
-        }
-
-        .btn-secondary {
-            background: #ddd;
-            color: #333;
-        }
-
-        .btn-secondary:hover {
-            background: #ccc;
-        }
-
-        /* Contacts */
-        .contacts {
-            background: #333;
-            color: white;
-            padding: 3rem 2rem;
-            text-align: center;
-        }
-
-        .contact-info {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 2rem;
-            max-width: 800px;
-            margin: 0 auto;
-        }
-
-        .contact-item {
-            padding: 1rem;
-        }
-
-        .contact-icon {
-            font-size: 2rem;
-            color: #4CAF50;
-            margin-bottom: 1rem;
-        }
-
-        .contact-title {
-            font-size: 1.2rem;
-            font-weight: bold;
-            margin-bottom: 0.5rem;
-        }
-
-        .contact-text {
-            color: #ccc;
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .logo {
-                font-size: 2.5rem;
-            }
-
-            .tagline {
-                font-size: 1.2rem;
-            }
-
-            .categories-grid {
-                grid-template-columns: repeat(3, 1fr);
-                gap: 1rem;
-            }
-
-            .category-icon {
-                width: 80px;
-                height: 80px;
-                font-size: 1.5rem;
-            }
-
-            .menu-items {
-                grid-template-columns: 1fr;
-            }
-
-            .section-title {
-                font-size: 2rem;
-            }
-        }
-
-        /* Smooth scrolling */
-        html {
-            scroll-behavior: smooth;
-        }
-
-        /* Loading animation */
-        .loading {
-            opacity: 0.7;
-            pointer-events: none;
-        }
-
-        /* Success message */
-        .success-message {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: #4CAF50;
-            color: white;
-            padding: 15px 20px;
-            border-radius: 8px;
-            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
-            z-index: 3000;
-            transform: translateX(300px);
-            transition: transform 0.3s ease;
-        }
-
-        .success-message.show {
-            transform: translateX(0);
-        }
-    </style>
+    <title>Каусар - Ресторан</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <!-- Hero Section -->
     <section class="hero">
-        <div class="logo">«Каусар»</div>
-        <div class="tagline">обитель комфорта и счастья...</div>
-        <button class="menu-btn" onclick="scrollToMenu()">🍽️ Меню</button>
+        <div class="hero-content">
+            <h1 class="logo">«Каусар»</h1>
+            <p class="tagline">обитель комфорта и счастья...</p>
+            <button class="menu-btn" onclick="scrollToMenu()">🍽️ Меню</button>
+        </div>
     </section>
 
-    <!-- Categories Section -->
-    <section class="categories" id="menu">
+    <!-- Menu Section -->
+    <section class="menu-section" id="menu">
         <div class="container">
             <h2 class="section-title">Наше меню</h2>
             
             <!-- Categories -->
-            <div class="categories-grid">
+            <div class="categories">
                 <div class="category-item active" data-category="all">
                     <div class="category-icon">🍽️</div>
-                    <div class="category-name">Все блюда</div>
-                </div>
-                <div class="category-item" data-category="bread">
-                    <div class="category-icon">🥖</div>
-                    <div class="category-name">Хлебные изделия</div>
-                </div>
-                <div class="category-item" data-category="breakfast">
-                    <div class="category-icon">🍳</div>
-                    <div class="category-name">Завтраки</div>
-                </div>
-                <div class="category-item" data-category="kids">
-                    <div class="category-icon">🧒</div>
-                    <div class="category-name">Детское меню</div>
-                </div>
-                <div class="category-item" data-category="salads">
-                    <div class="category-icon">🥗</div>
-                    <div class="category-name">Салаты</div>
-                </div>
-                <div class="category-item" data-category="soups">
-                    <div class="category-icon">🍲</div>
-                    <div class="category-name">Первые блюда</div>
-                </div>
-                <div class="category-item" data-category="mains">
-                    <div class="category-icon">🍖</div>
-                    <div class="category-name">Вторые блюда</div>
-                </div>
-                <div class="category-item" data-category="pasta">
-                    <div class="category-icon">🍝</div>
-                    <div class="category-name">Паста</div>
+                    <span>Все блюда</span>
                 </div>
                 <div class="category-item" data-category="pizza">
                     <div class="category-icon">🍕</div>
-                    <div class="category-name">Пицца</div>
+                    <span>Пицца</span>
+                </div>
+                <div class="category-item" data-category="burgers">
+                    <div class="category-icon">🍔</div>
+                    <span>Бургеры</span>
+                </div>
+                <div class="category-item" data-category="pasta">
+                    <div class="category-icon">🍝</div>
+                    <span>Паста</span>
+                </div>
+                <div class="category-item" data-category="salads">
+                    <div class="category-icon">🥗</div>
+                    <span>Салаты</span>
+                </div>
+                <div class="category-item" data-category="drinks">
+                    <div class="category-icon">🥤</div>
+                    <span>Напитки</span>
+                </div>
+                <div class="category-item" data-category="desserts">
+                    <div class="category-icon">🍰</div>
+                    <span>Десерты</span>
                 </div>
             </div>
 
             <!-- Menu Items -->
-            <div class="menu-items" id="menu-items">
-                <!-- Хлебные изделия -->
-                <div class="menu-item" data-category="bread">
-                    <div class="item-image">Фото лепешки тандырной</div>
-                    <div class="item-content">
-                        <div class="item-name">Лепешка тандырная</div>
-                        <div class="item-description">Свежая лепешка из тандыра</div>
-                        <div class="item-footer">
-                            <div class="item-price">150 ₸</div>
-                            <button class="add-to-cart" onclick="addToCart('Лепешка тандырная', 150)">В корзину</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="menu-item" data-category="bread">
-                    <div class="item-image">Фото баурсаков</div>
-                    <div class="item-content">
-                        <div class="item-name">Баурсаки</div>
-                        <div class="item-description">Традиционные казахские баурсаки</div>
-                        <div class="item-footer">
-                            <div class="item-price">200 ₸</div>
-                            <button class="add-to-cart" onclick="addToCart('Баурсаки', 200)">В корзину</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="menu-item" data-category="bread">
-                    <div class="item-image">Фото самсы</div>
-                    <div class="item-content">
-                        <div class="item-name">Самса с мясом</div>
-                        <div class="item-description">Хрустящая самса с сочной начинкой</div>
-                        <div class="item-footer">
-                            <div class="item-price">350 ₸</div>
-                            <button class="add-to-cart" onclick="addToCart('Самса с мясом', 350)">В корзину</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="menu-item" data-category="bread">
-                    <div class="item-image">Фото манты</div>
-                    <div class="item-content">
-                        <div class="item-name">Манты</div>
-                        <div class="item-description">Паровые манты с мясом</div>
-                        <div class="item-footer">
-                            <div class="item-price">450 ₸</div>
-                            <button class="add-to-cart" onclick="addToCart('Манты', 450)">В корзину</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Завтраки -->
-                <div class="menu-item" data-category="breakfast">
-                    <div class="item-image">Фото омлета</div>
-                    <div class="item-content">
-                        <div class="item-name">Омлет классический</div>
-                        <div class="item-description">Пышный омлет с зеленью</div>
-                        <div class="item-footer">
-                            <div class="item-price">800 ₸</div>
-                            <button class="add-to-cart" onclick="addToCart('Омлет классический', 800)">В корзину</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="menu-item" data-category="breakfast">
-                    <div class="item-image">Фото каши</div>
-                    <div class="item-content">
-                        <div class="item-name">Каша геркулесовая</div>
-                        <div class="item-description">Полезная каша с молоком</div>
-                        <div class="item-footer">
-                            <div class="item-price">500 ₸</div>
-                            <button class="add-to-cart" onclick="addToCart('Каша геркулесовая', 500)">В корзину</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="menu-item" data-category="breakfast">
-                    <div class="item-image">Фото блинов</div>
-                    <div class="item-content">
-                        <div class="item-name">Блины с медом</div>
-                        <div class="item-description">Тонкие блины с натуральным медом</div>
-                        <div class="item-footer">
-                            <div class="item-price">700 ₸</div>
-                            <button class="add-to-cart" onclick="addToCart('Блины с медом', 700)">В корзину</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="menu-item" data-category="breakfast">
-                    <div class="item-image">Фото сырников</div>
-                    <div class="item-content">
-                        <div class="item-name">Сырники со сметаной</div>
-                        <div class="item-description">Нежные сырники с домашней сметаной</div>
-                        <div class="item-footer">
-                            <div class="item-price">900 ₸</div>
-                            <button class="add-to-cart" onclick="addToCart('Сырники со сметаной', 900)">В корзину</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Детское меню -->
-                <div class="menu-item" data-category="kids">
-                    <div class="item-image">Фото детской каши</div>
-                    <div class="item-content">
-                        <div class="item-name">Молочная каша</div>
-                        <div class="item-description">Сладкая каша для детей</div>
-                        <div class="item-footer">
-                            <div class="item-price">400 ₸</div>
-                            <button class="add-to-cart" onclick="addToCart('Молочная каша', 400)">В корзину</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="menu-item" data-category="kids">
-                    <div class="item-image">Фото куриных наггетсов</div>
-                    <div class="item-content">
-                        <div class="item-name">Куриные наггетсы</div>
-                        <div class="item-description">Хрустящие наггетсы с картофелем фри</div>
-                        <div class="item-footer">
-                            <div class="item-price">1200 ₸</div>
-                            <button class="add-to-cart" onclick="addToCart('Куриные наггетсы', 1200)">В корзину</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="menu-item" data-category="kids">
-                    <div class="item-image">Фото детской пиццы</div>
-                    <div class="item-content">
-                        <div class="item-name">Мини пицца</div>
-                        <div class="item-description">Маленькая пицца с сыром</div>
-                        <div class="item-footer">
-                            <div class="item-price">800 ₸</div>
-                            <button class="add-to-cart" onclick="addToCart('Мини пицца', 800)">В корзину</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="menu-item" data-category="kids">
-                    <div class="item-image">Фото детского супа</div>
-                    <div class="item-content">
-                        <div class="item-name">Суп с фрикадельками</div>
-                        <div class="item-description">Легкий суп для детей</div>
-                        <div class="item-footer">
-                            <div class="item-price">600 ₸</div>
-                            <button class="add-to-cart" onclick="addToCart('Суп с фрикадельками', 600)">В корзину</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Салаты -->
-                <div class="menu-item" data-category="salads">
-                    <div class="item-image">Фото цезаря</div>
-                    <div class="item-content">
-                        <div class="item-name">Салат Цезарь</div>
-                        <div class="item-description">Классический цезарь с курицей</div>
-                        <div class="item-footer">
-                            <div class="item-price">1800 ₸</div>
-                            <button class="add-to-cart" onclick="addToCart('Салат Цезарь', 1800)">В корзину</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="menu-item" data-category="salads">
-                    <div class="item-image">Фото греческого салата</div>
-                    <div class="item-content">
-                        <div class="item-name">Греческий салат</div>
-                        <div class="item-description">Свежие овощи с сыром фета</div>
-                        <div class="item-footer">
-                            <div class="item-price">1500 ₸</div>
-                            <button class="add-to-cart" onclick="addToCart('Греческий салат', 1500)">В корзину</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="menu-item" data-category="salads">
-                    <div class="item-image">Фото оливье</div>
-                    <div class="item-content">
-                        <div class="item-name">Салат Оливье</div>
-                        <div class="item-description">Традиционный салат с майонезом</div>
-                        <div class="item-footer">
-                            <div class="item-price">1200 ₸</div>
-                            <button class="add-to-cart" onclick="addToCart('Салат Оливье', 1200)">В корзину</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="menu-item" data-category="salads">
-                    <div class="item-image">Фото винегрета</div>
-                    <div class="item-content">
-                        <div class="item-name">Винегрет</div>
-                        <div class="item-description">Овощной салат с маслом</div>
-                        <div class="item-footer">
-                            <div class="item-price">800 ₸</div>
-                            <button class="add-to-cart" onclick="addToCart('Винегрет', 800)">В корзину</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Первые блюда -->
-                <div class="menu-item" data-category="soups">
-                    <div class="item-image">Фото борща</div>
-                    <div class="item-content">
-                        <div class="item-name">Борщ украинский</div>
-                        <div class="item-description">Классический борщ со сметаной</div>
-                        <div class="item-footer">
-                            <div class="item-price">1000 ₸</div>
-                            <button class="add-to-cart" onclick="addToCart('Борщ украинский', 1000)">В корзину</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="menu-item" data-category="soups">
-                    <div class="item-image">Фото солянки</div>
-                    <div class="item-content">
-                        <div class="item-name">Солянка мясная</div>
-                        <div class="item-description">Наваристая солянка с маслинами</div>
-                        <div class="item-footer">
-                            <div class="item-price">1200 ₸</div>
-                            <button class="add-to-cart" onclick="addToCart('Солянка мясная', 1200)">В корзину</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="menu-item" data-category="soups">
-                    <div class="item-image">Фото лагмана</div>
-                    <div class="item-content">
-                        <div class="item-name">Лагман</div>
-                        <div class="item-description">Традиционный азиатский суп</div>
-                        <div class="item-footer">
-                            <div class="item-price">1300 ₸</div>
-                            <button class="add-to-cart" onclick="addToCart('Лагман', 1300)">В корзину</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="menu-item" data-category="soups">
-                    <div class="item-image">Фото шурпы</div>
-                    <div class="item-content">
-                        <div class="item-name">Шурпа</div>
-                        <div class="item-description">Густой мясной суп</div>
-                        <div class="item-footer">
-                            <div class="item-price">1400 ₸</div>
-                            <button class="add-to-cart" onclick="addToCart('Шурпа', 1400)">В корзину</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Вторые блюда -->
-                <div class="menu-item" data-category="mains">
-                    <div class="item-image">Фото бешбармака</div>
-                    <div class="item-content">
-                        <div class="item-name">Бешбармак</div>
-                        <div class="item-description">Национальное казахское блюдо</div>
-                        <div class="item-footer">
-                            <div class="item-price">2500 ₸</div>
-                            <button class="add-to-cart" onclick="addToCart('Бешбармак', 2500)">В корзину</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="menu-item" data-category="mains">
-                    <div class="item-image">Фото плова</div>
-                    <div class="item-content">
-                        <div class="item-name">Плов узбекский</div>
-                        <div class="item-description">Ароматный плов с мясом</div>
-                        <div class="item-footer">
-                            <div class="item-price">1800 ₸</div>
-                            <button class="add-to-cart" onclick="addToCart('Плов узбекский', 1800)">В корзину</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="menu-item" data-category="mains">
-                    <div class="item-image">Фото куриной грудки</div>
-                    <div class="item-content">
-                        <div class="item-name">Куриная грудка гриль</div>
-                        <div class="item-description">Сочная грудка с овощами</div>
-                        <div class="item-footer">
-                            <div class="item-price">2000 ₸</div>
-                            <button class="add-to-cart" onclick="addToCart('Куриная грудка гриль', 2000)">В корзину</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="menu-item" data-category="mains">
-                    <div class="item-image">Фото стейка</div>
-                    <div class="item-content">
-                        <div class="item-name">Стейк говяжий</div>
-                        <div class="item-description">Сочный стейк средней прожарки</div>
-                        <div class="item-footer">
-                            <div class="item-price">3500 ₸</div>
-                            <button class="add-to-cart" onclick="addToCart('Стейк говяжий', 3500)">В корзину</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Паста -->
-                <div class="menu-item" data-category="pasta">
-                    <div class="item-image">Фото карбонары</div>
-                    <div class="item-content">
-                        <div class="item-name">Паста Карбонара</div>
-                        <div class="item-description">Классическая карбонара с беконом</div>
-                        <div class="item-footer">
-                            <div class="item-price">1600 ₸</div>
-                            <button class="add-to-cart" onclick="addToCart('Паста Карбонара', 1600)">В корзину</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="menu-item" data-category="pasta">
-                    <div class="item-image">Фото болоньезе</div>
-                    <div class="item-content">
-                        <div class="item-name">Спагетти Болоньезе</div>
-                        <div class="item-description">Паста с мясным соусом</div>
-                        <div class="item-footer">
-                            <div class="item-price">1500 ₸</div>
-                            <button class="add-to-cart" onclick="addToCart('Спагетти Болоньезе', 1500)">В корзину</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="menu-item" data-category="pasta">
-                    <div class="item-image">Фото пасты с морепродуктами</div>
-                    <div class="item-content">
-                        <div class="item-name">Паста с морепродуктами</div>
-                        <div class="item-description">Спагетти с креветками и мидиями</div>
-                        <div class="item-footer">
-                            <div class="item-price">2200 ₸</div>
-                            <button class="add-to-cart" onclick="addToCart('Паста с морепродуктами', 2200)">В корзину</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="menu-item" data-category="pasta">
-                    <div class="item-image">Фото лазаньи</div>
-                    <div class="item-content">
-                        <div class="item-name">Лазанья классическая</div>
-                        <div class="item-description">Многослойная лазанья с сыром</div>
-                        <div class="item-footer">
-                            <div class="item-price">1900 ₸</div>
-                            <button class="add-to-cart" onclick="addToCart('Лазанья классическая', 1900)">В корзину</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Пицца -->
+            <div class="menu-items" id="menuItems">
+                <!-- Pizza -->
                 <div class="menu-item" data-category="pizza">
-                    <div class="item-image">Фото маргариты</div>
-                    <div class="item-content">
-                        <div class="item-name">Пицца Маргарита</div>
-                        <div class="item-description">Классическая пицца с томатами и моцареллой</div>
-                        <div class="item-footer">
-                            <div class="item-price">1800 ₸</div>
-                            <button class="add-to-cart" onclick="addToCart('Пицца Маргарита', 1800)">В корзину</button>
-                        </div>
+                    <div class="item-image">🍕</div>
+                    <div class="item-info">
+                        <h3>Маргарита</h3>
+                        <p>Томатный соус, моцарелла, базилик</p>
+                        <div class="item-price">2500 ₸</div>
+                        <button class="add-btn" onclick="openModal('Маргарита', 2500)">В корзину</button>
+                    </div>
+                </div>
+                <div class="menu-item" data-category="pizza">
+                    <div class="item-image">🍕</div>
+                    <div class="item-info">
+                        <h3>Пепперони</h3>
+                        <p>Томатный соус, моцарелла, пепперони</p>
+                        <div class="item-price">3200 ₸</div>
+                        <button class="add-btn" onclick="openModal('Пепперони', 3200)">В корзину</button>
+                    </div>
+                </div>
+                <div class="menu-item" data-category="pizza">
+                    <div class="item-image">🍕</div>
+                    <div class="item-info">
+                        <h3>Четыре сыра</h3>
+                        <p>Моцарелла, пармезан, горгонзола, чеддер</p>
+                        <div class="item-price">3800 ₸</div>
+                        <button class="add-btn" onclick="openModal('Четыре сыра', 3800)">В корзину</button>
+                    </div>
+                </div>
+                <div class="menu-item" data-category="pizza">
+                    <div class="item-image">🍕</div>
+                    <div class="item-info">
+                        <h3>Мясная</h3>
+                        <p>Томатный соус, моцарелла, говядина, свинина</p>
+                        <div class="item-price">4200 ₸</div>
+                        <button class="add-btn" onclick="openModal('Мясная', 4200)">В корзину</button>
                     </div>
                 </div>
 
-                <div class="menu-item" data-category="pizza">
-                    <div class="item-image">Фото пепперони</div>
-                    <div class="item-content">
-                        <div class="item-name">Пицца Пепперони</div>
-                        <div class="item-description">Острая пицца с колбасой пепперони</div>
-                        <div class="item-footer">
-                            <div class="item-price">2200 ₸</div>
-                            <button class="add-to-cart" onclick="addToCart('Пицца Пепперони', 2200)">В корзину</button>
-                        </div>
+                <!-- Burgers -->
+                <div class="menu-item" data-category="burgers">
+                    <div class="item-image">🍔</div>
+                    <div class="item-info">
+                        <h3>Классический бургер</h3>
+                        <p>Говяжья котлета, салат, помидор, сыр</p>
+                        <div class="item-price">1800 ₸</div>
+                        <button class="add-btn" onclick="openModal('Классический бургер', 1800)">В корзину</button>
+                    </div>
+                </div>
+                <div class="menu-item" data-category="burgers">
+                    <div class="item-image">🍔</div>
+                    <div class="item-info">
+                        <h3>Чизбургер</h3>
+                        <p>Котлета, двойной сыр, соус</p>
+                        <div class="item-price">2100 ₸</div>
+                        <button class="add-btn" onclick="openModal('Чизбургер', 2100)">В корзину</button>
+                    </div>
+                </div>
+                <div class="menu-item" data-category="burgers">
+                    <div class="item-image">🍔</div>
+                    <div class="item-info">
+                        <h3>Барбекю бургер</h3>
+                        <p>Котлета, бекон, барбекю соус, лук</p>
+                        <div class="item-price">2400 ₸</div>
+                        <button class="add-btn" onclick="openModal('Барбекю бургер', 2400)">В корзину</button>
+                    </div>
+                </div>
+                <div class="menu-item" data-category="burgers">
+                    <div class="item-image">🍔</div>
+                    <div class="item-info">
+                        <h3>Куриный бургер</h3>
+                        <p>Куриная котлета, салат, майонез</p>
+                        <div class="item-price">1900 ₸</div>
+                        <button class="add-btn" onclick="openModal('Куриный бургер', 1900)">В корзину</button>
                     </div>
                 </div>
 
-                <div class="menu-item" data-category="pizza">
-                    <div class="item-image">Фото четыре сыра</div>
-                    <div class="item-content">
-                        <div class="item-name">Пицца Четыре сыра</div>
-                        <div class="item-description">Пицца с четырьмя видами сыра</div>
-                        <div class="item-footer">
-                            <div class="item-price">2500 ₸</div>
-                            <button class="add-to-cart" onclick="addToCart('Пицца Четыре сыра', 2500)">В корзину</button>
-                        </div>
+                <!-- Pasta -->
+                <div class="menu-item" data-category="pasta">
+                    <div class="item-image">🍝</div>
+                    <div class="item-info">
+                        <h3>Карбонара</h3>
+                        <p>Спагетти, бекон, сливки, пармезан</p>
+                        <div class="item-price">2200 ₸</div>
+                        <button class="add-btn" onclick="openModal('Карбонара', 2200)">В корзину</button>
+                    </div>
+                </div>
+                <div class="menu-item" data-category="pasta">
+                    <div class="item-image">🍝</div>
+                    <div class="item-info">
+                        <h3>Болоньезе</h3>
+                        <p>Спагетти с мясным соусом</p>
+                        <div class="item-price">2000 ₸</div>
+                        <button class="add-btn" onclick="openModal('Болоньезе', 2000)">В корзину</button>
+                    </div>
+                </div>
+                <div class="menu-item" data-category="pasta">
+                    <div class="item-image">🍝</div>
+                    <div class="item-info">
+                        <h3>Альфредо</h3>
+                        <p>Феттучини в сливочном соусе</p>
+                        <div class="item-price">2100 ₸</div>
+                        <button class="add-btn" onclick="openModal('Альфредо', 2100)">В корзину</button>
+                    </div>
+                </div>
+                <div class="menu-item" data-category="pasta">
+                    <div class="item-image">🍝</div>
+                    <div class="item-info">
+                        <h3>Арабьята</h3>
+                        <p>Пенне с острым томатным соусом</p>
+                        <div class="item-price">1900 ₸</div>
+                        <button class="add-btn" onclick="openModal('Арабьята', 1900)">В корзину</button>
                     </div>
                 </div>
 
-                <div class="menu-item" data-category="pizza">
-                    <div class="item-image">Фото мясной пиццы</div>
-                    <div class="item-content">
-                        <div class="item-name">Пицца Мясная</div>
-                        <div class="item-description">Пицца с ассорти мясных продуктов</div>
-                        <div class="item-footer">
-                            <div class="item-price">2800 ₸</div>
-                            <button class="add-to-cart" onclick="addToCart('Пицца Мясная', 2800)">В корзину</button>
-                        </div>
+                <!-- Salads -->
+                <div class="menu-item" data-category="salads">
+                    <div class="item-image">🥗</div>
+                    <div class="item-info">
+                        <h3>Цезарь</h3>
+                        <p>Курица, салат, пармезан, гренки</p>
+                        <div class="item-price">1800 ₸</div>
+                        <button class="add-btn" onclick="openModal('Цезарь', 1800)">В корзину</button>
+                    </div>
+                </div>
+                <div class="menu-item" data-category="salads">
+                    <div class="item-image">🥗</div>
+                    <div class="item-info">
+                        <h3>Греческий</h3>
+                        <p>Огурцы, помидоры, фета, оливки</p>
+                        <div class="item-price">1500 ₸</div>
+                        <button class="add-btn" onclick="openModal('Греческий', 1500)">В корзину</button>
+                    </div>
+                </div>
+                <div class="menu-item" data-category="salads">
+                    <div class="item-image">🥗</div>
+                    <div class="item-info">
+                        <h3>Теплый салат</h3>
+                        <p>Теплые овощи с курицей</p>
+                        <div class="item-price">1700 ₸</div>
+                        <button class="add-btn" onclick="openModal('Теплый салат', 1700)">В корзину</button>
+                    </div>
+                </div>
+                <div class="menu-item" data-category="salads">
+                    <div class="item-image">🥗</div>
+                    <div class="item-info">
+                        <h3>Овощной</h3>
+                        <p>Свежие сезонные овощи</p>
+                        <div class="item-price">1200 ₸</div>
+                        <button class="add-btn" onclick="openModal('Овощной', 1200)">В корзину</button>
+                    </div>
+                </div>
+
+                <!-- Drinks -->
+                <div class="menu-item" data-category="drinks">
+                    <div class="item-image">🥤</div>
+                    <div class="item-info">
+                        <h3>Кока-кола</h3>
+                        <p>Классическая кола 0.5л</p>
+                        <div class="item-price">500 ₸</div>
+                        <button class="add-btn" onclick="openModal('Кока-кола', 500)">В корзину</button>
+                    </div>
+                </div>
+                <div class="menu-item" data-category="drinks">
+                    <div class="item-image">🥤</div>
+                    <div class="item-info">
+                        <h3>Свежевыжатый сок</h3>
+                        <p>Апельсиновый сок 0.3л</p>
+                        <div class="item-price">800 ₸</div>
+                        <button class="add-btn" onclick="openModal('Свежевыжатый сок', 800)">В корзину</button>
+                    </div>
+                </div>
+                <div class="menu-item" data-category="drinks">
+                    <div class="item-image">🥤</div>
+                    <div class="item-info">
+                        <h3>Минеральная вода</h3>
+                        <p>Газированная вода 0.5л</p>
+                        <div class="item-price">300 ₸</div>
+                        <button class="add-btn" onclick="openModal('Минеральная вода', 300)">В корзину</button>
+                    </div>
+                </div>
+                <div class="menu-item" data-category="drinks">
+                    <div class="item-image">🥤</div>
+                    <div class="item-info">
+                        <h3>Чай</h3>
+                        <p>Черный/зеленый чай</p>
+                        <div class="item-price">400 ₸</div>
+                        <button class="add-btn" onclick="openModal('Чай', 400)">В корзину</button>
+                    </div>
+                </div>
+
+                <!-- Desserts -->
+                <div class="menu-item" data-category="desserts">
+                    <div class="item-image">🍰</div>
+                    <div class="item-info">
+                        <h3>Тирамису</h3>
+                        <p>Классический итальянский десерт</p>
+                        <div class="item-price">1400 ₸</div>
+                        <button class="add-btn" onclick="openModal('Тирамису', 1400)">В корзину</button>
+                    </div>
+                </div>
+                <div class="menu-item" data-category="desserts">
+                    <div class="item-image">🍰</div>
+                    <div class="item-info">
+                        <h3>Чизкейк</h3>
+                        <p>Нежный творожный торт</p>
+                        <div class="item-price">1200 ₸</div>
+                        <button class="add-btn" onclick="openModal('Чизкейк', 1200)">В корзину</button>
+                    </div>
+                </div>
+                <div class="menu-item" data-category="desserts">
+                    <div class="item-image">🍰</div>
+                    <div class="item-info">
+                        <h3>Мороженое</h3>
+                        <p>3 шарика на выбор</p>
+                        <div class="item-price">800 ₸</div>
+                        <button class="add-btn" onclick="openModal('Мороженое', 800)">В корзину</button>
+                    </div>
+                </div>
+                <div class="menu-item" data-category="desserts">
+                    <div class="item-image">🍰</div>
+                    <div class="item-info">
+                        <h3>Шоколадный торт</h3>
+                        <p>Богатый шоколадный вкус</p>
+                        <div class="item-price">1300 ₸</div>
+                        <button class="add-btn" onclick="openModal('Шоколадный торт', 1300)">В корзину</button>
                     </div>
                 </div>
             </div>
@@ -922,490 +290,46 @@
     <!-- Contacts -->
     <section class="contacts">
         <div class="container">
-            <h2 class="section-title" style="color: white;">Наши контакты</h2>
+            <h2>Контакты</h2>
             <div class="contact-info">
                 <div class="contact-item">
                     <div class="contact-icon">📞</div>
-                    <div class="contact-title">Телефон</div>
-                    <div class="contact-text">+7 (702) 965 58-68<br>Номер для связи</div>
-                </div>
-                <div class="contact-item">
-                    <div class="contact-icon">🕒</div>
-                    <div class="contact-title">Время работы</div>
-                    <div class="contact-text">24/7 открыто</div>
+                    <p>+7 (702) 965 58-68</p>
                 </div>
                 <div class="contact-item">
                     <div class="contact-icon">📍</div>
-                    <div class="contact-title">Адрес</div>
-                    <div class="contact-text">г. Алматы, ул. Амир Темура, 25</div>
+                    <p>г. Алматы, ул. Амир Темура, 25</p>
                 </div>
-            </div>
-            <div style="margin-top: 2rem; color: #666;">
-                © 2024 Каусар шайхананалар желісі
+                <div class="contact-item">
+                    <div class="contact-icon">🕒</div>
+                    <p>Ежедневно: 10:00 - 23:00</p>
+                </div>
             </div>
         </div>
     </section>
 
-    <!-- Cart Button -->
-    <button class="cart-btn" onclick="openCart()">
-        🛒
-        <span class="cart-count" id="cart-count">0</span>
-    </button>
-
-    <!-- Modal for adding to cart -->
-    <div class="modal" id="add-modal">
+    <!-- Modal -->
+    <div class="modal" id="modal">
         <div class="modal-content">
-            <div class="modal-header">
-                <div class="modal-title" id="modal-item-name">Название блюда</div>
-                <div style="color: #4CAF50; font-size: 1.2rem; font-weight: bold;" id="modal-item-price">0 ₸</div>
-            </div>
-            <div class="quantity-control">
-                <button class="qty-btn" onclick="changeQuantity(-1)">-</button>
-                <input type="number" class="qty-input" id="quantity" value="1" min="1" readonly>
-                <button class="qty-btn" onclick="changeQuantity(1)">+</button>
+            <h3 id="modalTitle">Название блюда</h3>
+            <div class="quantity-selector">
+                <button onclick="changeQuantity(-1)">-</button>
+                <span id="quantity">1</span>
+                <button onclick="changeQuantity(1)">+</button>
             </div>
             <div class="modal-buttons">
-                <button class="btn btn-secondary" onclick="closeModal()">Отмена</button>
-                <button class="btn btn-primary" onclick="confirmAddToCart()">Добавить в корзину</button>
+                <button class="cancel-btn" onclick="closeModal()">Отмена</button>
+                <button class="confirm-btn" onclick="addToCart()">Добавить в корзину</button>
             </div>
         </div>
     </div>
 
-    <!-- Success message -->
-    <div class="success-message" id="success-message">
-        Товар добавлен в корзину!
+    <!-- Cart Button -->
+    <div class="cart-button" onclick="openCart()">
+        🛒
+        <span class="cart-count" id="cartCount">0</span>
     </div>
 
-    <script>
-        let cart = [];
-        let currentItem = {};
-
-        // Scroll to menu function
-        function scrollToMenu() {
-            document.getElementById('menu').scrollIntoView({ behavior: 'smooth' });
-        }
-
-        // Category filtering
-        document.addEventListener('DOMContentLoaded', function() {
-            const categoryItems = document.querySelectorAll('.category-item');
-            
-            categoryItems.forEach(item => {
-                item.addEventListener('click', function() {
-                    // Remove active class from all categories
-                    categoryItems.forEach(cat => cat.classList.remove('active'));
-                    // Add active to clicked category
-                    this.classList.add('active');
-
-                    const category = this.dataset.category;
-                    filterMenuItems(category);
-                });
-            });
-
-            // Initialize with smooth animation
-            setTimeout(() => {
-                filterMenuItems('all');
-            }, 500);
-        });
-
-        function filterMenuItems(category) {
-            const menuItems = document.querySelectorAll('.menu-item');
-            const menuContainer = document.getElementById('menu-items');
-            
-            // Add loading state
-            menuContainer.classList.add('loading');
-            
-            setTimeout(() => {
-                menuItems.forEach(item => {
-                    if (category === 'all' || item.dataset.category === category) {
-                        item.classList.remove('hidden');
-                    } else {
-                        item.classList.add('hidden');
-                    }
-                });
-                
-                // Remove loading state
-                menuContainer.classList.remove('loading');
-            }, 200);
-        }
-
-        function addToCart(name, price) {
-            currentItem = { name, price };
-            document.getElementById('modal-item-name').textContent = name;
-            document.getElementById('modal-item-price').textContent = price + ' ₸';
-            document.getElementById('quantity').value = 1;
-            
-            const modal = document.getElementById('add-modal');
-            modal.style.display = 'flex';
-            setTimeout(() => modal.classList.add('show'), 10);
-        }
-
-        function closeModal() {
-            const modal = document.getElementById('add-modal');
-            modal.classList.remove('show');
-            setTimeout(() => modal.style.display = 'none', 300);
-        }
-
-        function changeQuantity(delta) {
-            const input = document.getElementById('quantity');
-            const newValue = parseInt(input.value) + delta;
-            if (newValue >= 1) {
-                input.value = newValue;
-            }
-        }
-
-        function confirmAddToCart() {
-            const quantity = parseInt(document.getElementById('quantity').value);
-            const existingItem = cart.find(item => item.name === currentItem.name);
-            
-            if (existingItem) {
-                existingItem.quantity += quantity;
-            } else {
-                cart.push({
-                    name: currentItem.name,
-                    price: currentItem.price,
-                    quantity: quantity
-                });
-            }
-            
-            updateCartCount();
-            closeModal();
-            showSuccessMessage(`${currentItem.name} добавлен в корзину!`);
-        }
-
-        function updateCartCount() {
-            const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
-            document.getElementById('cart-count').textContent = totalItems;
-            
-            // Save cart to localStorage
-            localStorage.setItem('restaurantCart', JSON.stringify(cart));
-        }
-
-        function showSuccessMessage(message) {
-            const successMessage = document.getElementById('success-message');
-            successMessage.textContent = message;
-            successMessage.classList.add('show');
-            
-            setTimeout(() => {
-                successMessage.classList.remove('show');
-            }, 3000);
-        }
-
-        function openCart() {
-            if (cart.length === 0) {
-                showSuccessMessage('Корзина пуста');
-                return;
-            }
-            
-            // Create cart window
-            const cartWindow = window.open('', '_blank', 'width=500,height=600,scrollbars=yes,resizable=yes');
-            cartWindow.document.write(generateCartHTML());
-            cartWindow.document.close();
-        }
-
-        function generateCartHTML() {
-            const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-            
-            let cartItems = '';
-            cart.forEach((item, index) => {
-                cartItems += `
-                    <div class="cart-item">
-                        <div class="item-info">
-                            <div class="item-name">${item.name}</div>
-                            <div class="item-price">${item.price} ₸ x ${item.quantity} = ${item.price * item.quantity} ₸</div>
-                        </div>
-                        <div class="item-controls">
-                            <button onclick="updateCartItem(${index}, -1)">-</button>
-                            <span>${item.quantity}</span>
-                            <button onclick="updateCartItem(${index}, 1)">+</button>
-                            <button onclick="removeCartItem(${index})" style="background: #f44336; margin-left: 10px;">✕</button>
-                        </div>
-                    </div>
-                `;
-            });
-
-            return `
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <title>Корзина - Каусар</title>
-                    <meta charset="UTF-8">
-                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                    <style>
-                        body {
-                            font-family: Arial, sans-serif;
-                            margin: 0;
-                            padding: 20px;
-                            background: #f5f5f5;
-                        }
-                        .cart-header {
-                            text-align: center;
-                            color: #4CAF50;
-                            margin-bottom: 20px;
-                        }
-                        .cart-item {
-                            background: white;
-                            margin-bottom: 10px;
-                            padding: 15px;
-                            border-radius: 8px;
-                            display: flex;
-                            justify-content: space-between;
-                            align-items: center;
-                            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-                        }
-                        .item-name {
-                            font-weight: bold;
-                            margin-bottom: 5px;
-                        }
-                        .item-price {
-                            color: #666;
-                            font-size: 0.9rem;
-                        }
-                        .item-controls {
-                            display: flex;
-                            align-items: center;
-                            gap: 5px;
-                        }
-                        .item-controls button {
-                            background: #4CAF50;
-                            color: white;
-                            border: none;
-                            width: 30px;
-                            height: 30px;
-                            border-radius: 50%;
-                            cursor: pointer;
-                            transition: all 0.3s ease;
-                        }
-                        .item-controls button:hover {
-                            background: #45a049;
-                            transform: scale(1.1);
-                        }
-                        .total {
-                            background: #4CAF50;
-                            color: white;
-                            padding: 20px;
-                            text-align: center;
-                            border-radius: 8px;
-                            font-size: 1.2rem;
-                            font-weight: bold;
-                            margin: 20px 0;
-                            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
-                        }
-                        .order-form {
-                            background: white;
-                            padding: 20px;
-                            border-radius: 8px;
-                            margin-top: 20px;
-                            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-                        }
-                        .form-group {
-                            margin-bottom: 15px;
-                        }
-                        .form-group label {
-                            display: block;
-                            margin-bottom: 5px;
-                            font-weight: bold;
-                            color: #333;
-                        }
-                        .form-group input, .form-group textarea {
-                            width: 100%;
-                            padding: 10px;
-                            border: 2px solid #ddd;
-                            border-radius: 5px;
-                            font-size: 1rem;
-                            transition: border-color 0.3s ease;
-                        }
-                        .form-group input:focus, .form-group textarea:focus {
-                            outline: none;
-                            border-color: #4CAF50;
-                        }
-                        .order-btn {
-                            background: #4CAF50;
-                            color: white;
-                            border: none;
-                            padding: 15px 30px;
-                            border-radius: 8px;
-                            font-size: 1.1rem;
-                            cursor: pointer;
-                            width: 100%;
-                            margin-top: 10px;
-                            transition: all 0.3s ease;
-                        }
-                        .order-btn:hover {
-                            background: #45a049;
-                            transform: translateY(-2px);
-                            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);
-                        }
-                        .empty-cart {
-                            text-align: center;
-                            color: #666;
-                            font-size: 1.2rem;
-                            margin: 50px 0;
-                        }
-                        @media (max-width: 480px) {
-                            body {
-                                padding: 10px;
-                            }
-                            .cart-item {
-                                flex-direction: column;
-                                gap: 10px;
-                            }
-                            .item-controls {
-                                justify-content: center;
-                            }
-                        }
-                    </style>
-                </head>
-                <body>
-                    <h1 class="cart-header">🛒 Ваш заказ</h1>
-                    
-                    ${cart.length > 0 ? `
-                        <div class="cart-items">
-                            ${cartItems}
-                        </div>
-                        <div class="total">
-                            Итого: ${total.toLocaleString()} ₸
-                        </div>
-                        
-                        <div class="order-form">
-                            <h3>Оформление заказа</h3>
-                            <div class="form-group">
-                                <label>Ваше имя:</label>
-                                <input type="text" id="customer-name" required placeholder="Введите ваше имя">
-                            </div>
-                            <div class="form-group">
-                                <label>Номер телефона:</label>
-                                <input type="tel" id="customer-phone" required placeholder="+7 (___) ___-__-__">
-                            </div>
-                            <div class="form-group">
-                                <label>Адрес доставки:</label>
-                                <textarea id="customer-address" rows="3" placeholder="Укажите адрес доставки"></textarea>
-                            </div>
-                            <div class="form-group">
-                                <label>Комментарий к заказу:</label>
-                                <textarea id="order-comment" rows="2" placeholder="Дополнительные пожелания"></textarea>
-                            </div>
-                            <button class="order-btn" onclick="submitOrder()">Оформить заказ</button>
-                        </div>
-                    ` : `
-                        <div class="empty-cart">
-                            Корзина пуста
-                        </div>
-                    `}
-
-                    <script>
-                        let cartData = ${JSON.stringify(cart)};
-                        
-                        function updateCartItem(index, delta) {
-                            if (cartData[index]) {
-                                cartData[index].quantity += delta;
-                                if (cartData[index].quantity <= 0) {
-                                    cartData.splice(index, 1);
-                                }
-                                window.opener.cart = cartData;
-                                window.opener.updateCartCount();
-                                location.reload();
-                            }
-                        }
-                        
-                        function removeCartItem(index) {
-                            if (cartData[index]) {
-                                cartData.splice(index, 1);
-                                window.opener.cart = cartData;
-                                window.opener.updateCartCount();
-                                location.reload();
-                            }
-                        }
-                        
-                        function submitOrder() {
-                            const name = document.getElementById('customer-name').value.trim();
-                            const phone = document.getElementById('customer-phone').value.trim();
-                            const address = document.getElementById('customer-address').value.trim();
-                            const comment = document.getElementById('order-comment').value.trim();
-                            
-                            if (!name || !phone) {
-                                alert('Пожалуйста, заполните обязательные поля (имя и телефон)');
-                                return;
-                            }
-                            
-                            const orderText = 'Новый заказ из ресторана Каусар!\\n\\n' +
-                                'Клиент: ' + name + '\\n' +
-                                'Телефон: ' + phone + '\\n' +
-                                (address ? 'Адрес: ' + address + '\\n' : '') +
-                                (comment ? 'Комментарий: ' + comment + '\\n' : '') +
-                                '\\nЗаказ:\\n' + 
-                                cartData.map(item => '• ' + item.name + ': ' + item.quantity + ' шт. × ' + item.price + ' ₸ = ' + (item.quantity * item.price) + ' ₸').join('\\n') +
-                                '\\n\\n💰 Итого: ' + cartData.reduce((sum, item) => sum + (item.price * item.quantity), 0).toLocaleString() + ' ₸';
-                            
-                            // Copy to clipboard
-                            navigator.clipboard.writeText(orderText).then(() => {
-                                alert('Заказ скопирован в буфер обмена!\\n\\nВы можете отправить его через любой мессенджер:\\n• WhatsApp: +7 (702) 965 58-68\\n• Telegram\\n• SMS');
-                            }).catch(() => {
-                                alert('Заказ сформирован!\\n\\n' + orderText + '\\n\\nСкопируйте этот текст и отправьте на номер:\\n+7 (702) 965 58-68');
-                            });
-                            
-                            // Clear cart
-                            window.opener.cart = [];
-                            window.opener.updateCartCount();
-                            
-                            setTimeout(() => {
-                                window.close();
-                            }, 2000);
-                        }
-                        
-                        // Phone number formatting
-                        document.getElementById('customer-phone').addEventListener('input', function(e) {
-                            let value = e.target.value.replace(/\D/g, '');
-                            if (value.length > 0 && value[0] !== '7') {
-                                value = '7' + value;
-                            }
-                            
-                            let formattedValue = '';
-                            if (value.length > 0) {
-                                formattedValue = '+7';
-                                if (value.length > 1) {
-                                    formattedValue += ' (' + value.substring(1, 4);
-                                }
-                                if (value.length > 4) {
-                                    formattedValue += ') ' + value.substring(4, 7);
-                                }
-                                if (value.length > 7) {
-                                    formattedValue += '-' + value.substring(7, 9);
-                                }
-                                if (value.length > 9) {
-                                    formattedValue += '-' + value.substring(9, 11);
-                                }
-                            }
-                            
-                            e.target.value = formattedValue;
-                        });
-                    </script>
-                </body>
-                </html>
-            `;
-        }
-
-        // Load cart from localStorage on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            const savedCart = localStorage.getItem('restaurantCart');
-            if (savedCart) {
-                cart = JSON.parse(savedCart);
-                updateCartCount();
-            }
-        });
-
-        // Click outside modal to close
-        document.getElementById('add-modal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeModal();
-            }
-        });
-
-        // Keyboard shortcuts
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                closeModal();
-            }
-        });
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>

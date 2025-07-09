@@ -1,0 +1,72 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Корзина - Каусар</title>
+    <link rel="stylesheet" href="cart-styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🛒 Ваша корзина</h1>
+            <button class="back-btn" onclick="window.close()">← Назад к меню</button>
+        </header>
+        
+        <div class="cart-content">
+            <div class="cart-items" id="cartItems">
+                <!-- Cart items will be loaded here -->
+            </div>
+            
+            <div class="cart-total" id="cartTotal">
+                <h2>Итого: 0 ₸</h2>
+            </div>
+            
+            <div class="order-section" id="orderSection">
+                <button class="order-btn" onclick="showOrderForm()">Оформить заказ</button>
+            </div>
+        </div>
+        
+        <div class="empty-cart" id="emptyCart" style="display: none;">
+            <div class="empty-icon">🛒</div>
+            <h2>Корзина пуста</h2>
+            <p>Добавьте блюда из меню</p>
+            <button class="back-btn" onclick="window.close()">Вернуться к меню</button>
+        </div>
+    </div>
+
+    <!-- Order Form Modal -->
+    <div class="modal" id="orderModal">
+        <div class="modal-content">
+            <h2>Оформление заказа</h2>
+            <form id="orderForm">
+                <div class="input-group">
+                    <label for="customerName">Ваше имя</label>
+                    <input type="text" id="customerName" required placeholder="Введите ваше имя">
+                </div>
+                <div class="input-group">
+                    <label for="customerPhone">Номер телефона</label>
+                    <input type="tel" id="customerPhone" required placeholder="+7 (___) ___-__-__">
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="cancel-btn" onclick="closeOrderForm()">Отмена</button>
+                    <button type="submit" class="confirm-btn">Подтвердить заказ</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div class="modal" id="successModal">
+        <div class="modal-content">
+            <div class="success-icon">✅</div>
+            <h2>Заказ отправлен!</h2>
+            <p>Ваш заказ был успешно отправлен в Telegram. Мы свяжемся с вами в ближайшее время.</p>
+            <button class="confirm-btn" onclick="closeSuccessModal()">Закрыть</button>
+        </div>
+    </div>
+
+    <script src="cart-script.js"></script>
+</body>
+</html>
