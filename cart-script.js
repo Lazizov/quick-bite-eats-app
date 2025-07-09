@@ -13,11 +13,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
 function loadCart() {
     const savedCart = localStorage.getItem('restaurantCart');
-    console.log('Loading cart from localStorage:', savedCart);
+    console.log('Raw localStorage data:', savedCart);
+    
     if (savedCart) {
         try {
             cart = JSON.parse(savedCart);
-            console.log('Cart loaded successfully:', cart);
+            console.log('Parsed cart data:', cart);
+            console.log('Cart length:', cart.length);
+            console.log('Cart is array:', Array.isArray(cart));
         } catch (error) {
             console.error('Error parsing cart data:', error);
             cart = [];
@@ -26,6 +29,14 @@ function loadCart() {
         console.log('No cart data found in localStorage');
         cart = [];
     }
+    
+    // Дополнительная проверка структуры данных
+    if (!Array.isArray(cart)) {
+        console.error('Cart is not an array, resetting to empty array');
+        cart = [];
+    }
+    
+    console.log('Final cart after loading:', cart);
 }
 
 function saveCart() {
@@ -34,18 +45,28 @@ function saveCart() {
 }
 
 function renderCart() {
-    console.log('Rendering cart with items:', cart);
+    console.log('=== RENDER CART START ===');
+    console.log('Current cart:', cart);
+    console.log('Cart length:', cart.length);
+    
     const cartItemsContainer = document.getElementById('cartItems');
     const cartTotalContainer = document.getElementById('cartTotal');
     const emptyCartContainer = document.getElementById('emptyCart');
     const orderSection = document.getElementById('orderSection');
     
+    console.log('Cart elements found:', {
+        cartItems: !!cartItemsContainer,
+        cartTotal: !!cartTotalContainer,
+        emptyCart: !!emptyCartContainer,
+        orderSection: !!orderSection
+    });
+    
     if (!cartItemsContainer || !cartTotalContainer || !emptyCartContainer || !orderSection) {
-        console.error('Cart elements not found');
+        console.error('Required cart elements not found in DOM');
         return;
     }
     
-    if (cart.length === 0) {
+    if (!cart || cart.length === 0) {
         console.log('Cart is empty, showing empty state');
         cartItemsContainer.style.display = 'none';
         cartTotalContainer.style.display = 'none';
@@ -62,8 +83,21 @@ function renderCart() {
     
     // Render cart items
     cartItemsContainer.innerHTML = '';
+    
     cart.forEach((item, index) => {
-        console.log('Rendering item:', item);
+        console.log(`Rendering item ${index}:`, item);
+        
+        // Проверка валидности элемента
+        if (!item || typeof item !== 'object') {
+            console.error(`Invalid item at index ${index}:`, item);
+            return;
+        }
+        
+        if (!item.name || !item.price || !item.quantity) {
+            console.error(`Item missing required properties at index ${index}:`, item);
+            return;
+        }
+        
         const cartItemElement = document.createElement('div');
         cartItemElement.className = 'cart-item';
         cartItemElement.innerHTML = `
@@ -81,12 +115,22 @@ function renderCart() {
             </div>
         `;
         cartItemsContainer.appendChild(cartItemElement);
+        console.log(`Item ${index} rendered successfully`);
     });
     
     // Update total
-    const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const total = cart.reduce((sum, item) => {
+        if (item && typeof item.price === 'number' && typeof item.quantity === 'number') {
+            return sum + (item.price * item.quantity);
+        }
+        console.error('Invalid item for total calculation:', item);
+        return sum;
+    }, 0);
+    
     console.log('Total calculated:', total);
     cartTotalContainer.innerHTML = `<h2>Итого: ${total.toLocaleString()} ₸</h2>`;
+    
+    console.log('=== RENDER CART END ===');
 }
 
 function changeQuantity(index, delta) {
@@ -273,3 +317,12 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 });
+
+// Дополнительная функция для отладки - вызывать из консоли
+window.debugCart = function() {
+    console.log('=== DEBUG CART INFO ===');
+    console.log('localStorage data:', localStorage.getItem('restaurantCart'));
+    console.log('Current cart variable:', cart);
+    console.log('Cart length:', cart ? cart.length : 'undefined');
+    console.log('=======================');
+};
