@@ -39,6 +39,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Modal functions
 function openModal(name, price) {
+    console.log('Opening modal for:', name, price);
     currentItem = { name, price };
     currentQuantity = 1;
     
@@ -62,20 +63,29 @@ function changeQuantity(delta) {
 }
 
 function addToCart() {
-    if (!currentItem) return;
+    if (!currentItem) {
+        console.error('No current item to add to cart');
+        return;
+    }
+    
+    console.log('Adding to cart:', currentItem, 'quantity:', currentQuantity);
     
     const existingItem = cart.find(item => item.name === currentItem.name);
     
     if (existingItem) {
         existingItem.quantity += currentQuantity;
+        console.log('Updated existing item:', existingItem);
     } else {
-        cart.push({
+        const newItem = {
             name: currentItem.name,
             price: currentItem.price,
             quantity: currentQuantity
-        });
+        };
+        cart.push(newItem);
+        console.log('Added new item:', newItem);
     }
     
+    console.log('Cart after addition:', cart);
     updateCartCount();
     closeModal();
     showNotification(`${currentItem.name} добавлен в корзину!`);
@@ -83,13 +93,21 @@ function addToCart() {
 
 function updateCartCount() {
     const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
-    document.getElementById('cartCount').textContent = totalItems;
+    const cartCountElement = document.getElementById('cartCount');
+    if (cartCountElement) {
+        cartCountElement.textContent = totalItems;
+    }
+    
+    console.log('Cart count updated:', totalItems);
+    console.log('Current cart:', cart);
     
     // Save to localStorage
     localStorage.setItem('restaurantCart', JSON.stringify(cart));
+    console.log('Cart saved to localStorage');
 }
 
 function openCart() {
+    console.log('Opening cart with items:', cart);
     // Save cart to localStorage before opening cart page
     localStorage.setItem('restaurantCart', JSON.stringify(cart));
     // Open cart page
@@ -120,24 +138,41 @@ function showNotification(message) {
     setTimeout(() => {
         notification.style.animation = 'slideOutRight 0.3s ease-out';
         setTimeout(() => {
-            document.body.removeChild(notification);
+            if (document.body.contains(notification)) {
+                document.body.removeChild(notification);
+            }
         }, 300);
     }, 3000);
 }
 
 // Load cart from localStorage on page load
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('Page loaded, loading cart from localStorage');
     const savedCart = localStorage.getItem('restaurantCart');
     if (savedCart) {
-        cart = JSON.parse(savedCart);
-        updateCartCount();
+        try {
+            cart = JSON.parse(savedCart);
+            console.log('Cart loaded from localStorage:', cart);
+            updateCartCount();
+        } catch (error) {
+            console.error('Error loading cart from localStorage:', error);
+            cart = [];
+        }
+    } else {
+        console.log('No saved cart found');
+        cart = [];
     }
 });
 
 // Close modal when clicking outside
-document.getElementById('modal').addEventListener('click', function(e) {
-    if (e.target === this) {
-        closeModal();
+document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('modal');
+    if (modal) {
+        modal.addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
     }
 });
 

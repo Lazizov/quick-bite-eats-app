@@ -1,29 +1,52 @@
 
 let cart = [];
 
+// Telegram bot settings - добавьте ваши настройки здесь
+const TELEGRAM_BOT_TOKEN = 'YOUR_BOT_TOKEN_HERE';
+const TELEGRAM_CHAT_ID = 'YOUR_CHAT_ID_HERE';
+
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('Cart page loaded');
     loadCart();
     renderCart();
 });
 
 function loadCart() {
     const savedCart = localStorage.getItem('restaurantCart');
+    console.log('Loading cart from localStorage:', savedCart);
     if (savedCart) {
-        cart = JSON.parse(savedCart);
+        try {
+            cart = JSON.parse(savedCart);
+            console.log('Cart loaded successfully:', cart);
+        } catch (error) {
+            console.error('Error parsing cart data:', error);
+            cart = [];
+        }
+    } else {
+        console.log('No cart data found in localStorage');
+        cart = [];
     }
 }
 
 function saveCart() {
     localStorage.setItem('restaurantCart', JSON.stringify(cart));
+    console.log('Cart saved to localStorage:', cart);
 }
 
 function renderCart() {
+    console.log('Rendering cart with items:', cart);
     const cartItemsContainer = document.getElementById('cartItems');
     const cartTotalContainer = document.getElementById('cartTotal');
     const emptyCartContainer = document.getElementById('emptyCart');
     const orderSection = document.getElementById('orderSection');
     
+    if (!cartItemsContainer || !cartTotalContainer || !emptyCartContainer || !orderSection) {
+        console.error('Cart elements not found');
+        return;
+    }
+    
     if (cart.length === 0) {
+        console.log('Cart is empty, showing empty state');
         cartItemsContainer.style.display = 'none';
         cartTotalContainer.style.display = 'none';
         orderSection.style.display = 'none';
@@ -31,6 +54,7 @@ function renderCart() {
         return;
     }
     
+    console.log('Cart has items, showing cart content');
     cartItemsContainer.style.display = 'block';
     cartTotalContainer.style.display = 'block';
     orderSection.style.display = 'block';
@@ -39,6 +63,7 @@ function renderCart() {
     // Render cart items
     cartItemsContainer.innerHTML = '';
     cart.forEach((item, index) => {
+        console.log('Rendering item:', item);
         const cartItemElement = document.createElement('div');
         cartItemElement.className = 'cart-item';
         cartItemElement.innerHTML = `
@@ -60,39 +85,58 @@ function renderCart() {
     
     // Update total
     const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    console.log('Total calculated:', total);
     cartTotalContainer.innerHTML = `<h2>Итого: ${total.toLocaleString()} ₸</h2>`;
 }
 
 function changeQuantity(index, delta) {
-    cart[index].quantity += delta;
-    if (cart[index].quantity <= 0) {
-        cart.splice(index, 1);
+    console.log('Changing quantity for item', index, 'by', delta);
+    if (cart[index]) {
+        cart[index].quantity += delta;
+        if (cart[index].quantity <= 0) {
+            cart.splice(index, 1);
+        }
+        saveCart();
+        renderCart();
     }
-    saveCart();
-    renderCart();
 }
 
 function removeItem(index) {
-    cart.splice(index, 1);
-    saveCart();
-    renderCart();
+    console.log('Removing item at index', index);
+    if (cart[index]) {
+        cart.splice(index, 1);
+        saveCart();
+        renderCart();
+    }
 }
 
 function showOrderForm() {
-    if (cart.length === 0) return;
+    if (cart.length === 0) {
+        console.log('Cannot show order form - cart is empty');
+        return;
+    }
     
+    console.log('Showing order form');
     const modal = document.getElementById('orderModal');
-    modal.classList.add('show');
+    if (modal) {
+        modal.classList.add('show');
+    }
 }
 
 function closeOrderForm() {
+    console.log('Closing order form');
     const modal = document.getElementById('orderModal');
-    modal.classList.remove('show');
+    if (modal) {
+        modal.classList.remove('show');
+    }
 }
 
 function closeSuccessModal() {
+    console.log('Closing success modal');
     const modal = document.getElementById('successModal');
-    modal.classList.remove('show');
+    if (modal) {
+        modal.classList.remove('show');
+    }
     
     // Clear cart and close window
     cart = [];
@@ -103,89 +147,129 @@ function closeSuccessModal() {
 }
 
 // Handle order form submission
-document.getElementById('orderForm').addEventListener('submit', function(e) {
-    e.preventDefault();
+document.addEventListener('DOMContentLoaded', function() {
+    const orderForm = document.getElementById('orderForm');
+    if (orderForm) {
+        orderForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            console.log('Order form submitted');
+            
+            const name = document.getElementById('customerName').value.trim();
+            const phone = document.getElementById('customerPhone').value.trim();
+            
+            if (!name || !phone) {
+                alert('Пожалуйста, заполните все поля');
+                return;
+            }
+            
+            // Prepare order data
+            const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            const orderText = `🍽️ Новый заказ из ресторана "Каусар"!\n\n` +
+                `👤 Клиент: ${name}\n` +
+                `📞 Телефон: ${phone}\n\n` +
+                `📋 Заказ:\n` +
+                cart.map(item => `• ${item.name}: ${item.quantity} шт. × ${item.price} ₸ = ${(item.quantity * item.price).toLocaleString()} ₸`).join('\n') +
+                `\n\n💰 Итого: ${total.toLocaleString()} ₸\n\n` +
+                `📅 Время заказа: ${new Date().toLocaleString('ru-RU')}`;
+            
+            console.log('Sending order to Telegram:', orderText);
+            
+            // Send to Telegram
+            sendToTelegram(orderText);
+            
+            // Close order form and show success
+            closeOrderForm();
+            const successModal = document.getElementById('successModal');
+            if (successModal) {
+                successModal.classList.add('show');
+            }
+        });
+    }
+});
+
+async function sendToTelegram(orderText) {
+    console.log('Attempting to send to Telegram...');
     
-    const name = document.getElementById('customerName').value.trim();
-    const phone = document.getElementById('customerPhone').value.trim();
-    
-    if (!name || !phone) {
-        alert('Пожалуйста, заполните все поля');
+    // Проверяем, настроены ли параметры Telegram
+    if (TELEGRAM_BOT_TOKEN === 'YOUR_BOT_TOKEN_HERE' || TELEGRAM_CHAT_ID === 'YOUR_CHAT_ID_HERE') {
+        console.log('Telegram not configured, showing message in console only');
+        console.log('=== ЗАКАЗ ДЛЯ TELEGRAM ===');
+        console.log(orderText);
+        console.log('=== КОНЕЦ ЗАКАЗА ===');
+        
+        // Показываем пользователю что заказ готов, но не отправлен
+        alert('Заказ сформирован! Telegram бот не настроен. Проверьте консоль для деталей заказа.');
         return;
     }
     
-    // Prepare order data
-    const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    const orderText = `🍽️ Новый заказ из ресторана "Каусар"!\n\n` +
-        `👤 Клиент: ${name}\n` +
-        `📞 Телефон: ${phone}\n\n` +
-        `📋 Заказ:\n` +
-        cart.map(item => `• ${item.name}: ${item.quantity} шт. × ${item.price} ₸ = ${item.quantity * item.price} ₸`).join('\n') +
-        `\n\n💰 Итого: ${total.toLocaleString()} ₸\n\n` +
-        `📅 Время заказа: ${new Date().toLocaleString('ru-RU')}`;
-    
-    // Send to Telegram (simulated)
-    sendToTelegram(orderText);
-    
-    // Close order form and show success
-    closeOrderForm();
-    document.getElementById('successModal').classList.add('show');
-});
+    try {
+        const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                chat_id: TELEGRAM_CHAT_ID,
+                text: orderText,
+                parse_mode: 'HTML'
+            })
+        });
 
-function sendToTelegram(orderText) {
-    // This is a simulation of sending to Telegram
-    // In a real application, you would send this to your Telegram bot API
-    console.log('Заказ отправлен в Telegram:');
-    console.log(orderText);
-    
-    // You can implement actual Telegram integration here
-    // For example, using fetch to send to your bot's webhook
-    /*
-    fetch('YOUR_TELEGRAM_BOT_WEBHOOK_URL', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            message: orderText
-        })
-    });
-    */
+        const result = await response.json();
+        
+        if (result.ok) {
+            console.log('Order sent to Telegram successfully');
+        } else {
+            console.error('Failed to send to Telegram:', result);
+            console.log('Order details (fallback):', orderText);
+        }
+    } catch (error) {
+        console.error('Error sending to Telegram:', error);
+        console.log('Order details (fallback):', orderText);
+    }
 }
 
 // Phone number formatting
-document.getElementById('customerPhone').addEventListener('input', function(e) {
-    let value = e.target.value.replace(/\D/g, '');
-    
-    if (value.length > 0 && value[0] !== '7') {
-        value = '7' + value;
+document.addEventListener('DOMContentLoaded', function() {
+    const phoneInput = document.getElementById('customerPhone');
+    if (phoneInput) {
+        phoneInput.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            
+            if (value.length > 0 && value[0] !== '7') {
+                value = '7' + value;
+            }
+            
+            let formattedValue = '';
+            if (value.length > 0) {
+                formattedValue = '+7';
+                if (value.length > 1) {
+                    formattedValue += ' (' + value.substring(1, 4);
+                }
+                if (value.length > 4) {
+                    formattedValue += ') ' + value.substring(4, 7);
+                }
+                if (value.length > 7) {
+                    formattedValue += '-' + value.substring(7, 9);
+                }
+                if (value.length > 9) {
+                    formattedValue += '-' + value.substring(9, 11);
+                }
+            }
+            
+            e.target.value = formattedValue;
+        });
     }
-    
-    let formattedValue = '';
-    if (value.length > 0) {
-        formattedValue = '+7';
-        if (value.length > 1) {
-            formattedValue += ' (' + value.substring(1, 4);
-        }
-        if (value.length > 4) {
-            formattedValue += ') ' + value.substring(4, 7);
-        }
-        if (value.length > 7) {
-            formattedValue += '-' + value.substring(7, 9);
-        }
-        if (value.length > 9) {
-            formattedValue += '-' + value.substring(9, 11);
-        }
-    }
-    
-    e.target.value = formattedValue;
 });
 
 // Close modals when clicking outside
-document.querySelectorAll('.modal').forEach(modal => {
-    modal.addEventListener('click', function(e) {
-        if (e.target === this) {
-            this.classList.remove('show');
-        }
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.modal').forEach(modal => {
+        modal.addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.classList.remove('show');
+            }
+        });
     });
 });
