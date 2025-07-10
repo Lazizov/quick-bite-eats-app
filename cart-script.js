@@ -1,4 +1,3 @@
-
 let cart = [];
 
 // Telegram bot settings - добавьте ваши настройки здесь
@@ -264,14 +263,27 @@ async function sendToTelegram(orderText) {
         
         if (result.ok) {
             console.log('Order sent to Telegram successfully');
+            // Clear cart after successful order
+            clearCartAfterOrder();
         } else {
             console.error('Failed to send to Telegram:', result);
             console.log('Order details (fallback):', orderText);
+            // Still clear cart even if telegram fails
+            clearCartAfterOrder();
         }
     } catch (error) {
         console.error('Error sending to Telegram:', error);
         console.log('Order details (fallback):', orderText);
+        // Still clear cart even if telegram fails
+        clearCartAfterOrder();
     }
+}
+
+function clearCartAfterOrder() {
+    console.log('Clearing cart after order...');
+    cart = [];
+    localStorage.removeItem('restaurantCart');
+    console.log('Cart cleared successfully');
 }
 
 // Phone number formatting

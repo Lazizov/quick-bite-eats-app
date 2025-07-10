@@ -1,4 +1,3 @@
-
 let cart = [];
 let currentItem = null;
 let currentQuantity = 1;
@@ -36,6 +35,110 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+// Load dynamic content from admin panel
+function loadDynamicContent() {
+    loadDynamicCategories();
+    loadDynamicMenuItems();
+}
+
+function loadDynamicCategories() {
+    const savedCategories = localStorage.getItem('websiteCategories');
+    if (!savedCategories) return;
+    
+    try {
+        const categories = JSON.parse(savedCategories);
+        const categoriesContainer = document.querySelector('.categories');
+        if (!categoriesContainer) return;
+        
+        // Keep the "All" category and add dynamic ones
+        const allCategory = categoriesContainer.querySelector('[data-category="all"]');
+        if (!allCategory) return;
+        
+        // Remove existing dynamic categories
+        const existingCategories = categoriesContainer.querySelectorAll('.category-item:not([data-category="all"])');
+        existingCategories.forEach(cat => cat.remove());
+        
+        // Add new categories
+        categories.forEach(category => {
+            const categoryElement = document.createElement('div');
+            categoryElement.className = 'category-item';
+            categoryElement.setAttribute('data-category', category.slug);
+            categoryElement.innerHTML = `
+                <div class="category-image">
+                    <span style="font-size: 2rem;">${category.emoji}</span>
+                </div>
+                <span>${category.name}</span>
+            `;
+            
+            // Add click event listener
+            categoryElement.addEventListener('click', function() {
+                // Remove active class from all categories
+                document.querySelectorAll('.category-item').forEach(cat => cat.classList.remove('active'));
+                // Add active to clicked category
+                this.classList.add('active');
+                
+                const categorySlug = this.dataset.category;
+                filterItems(categorySlug);
+            });
+            
+            categoriesContainer.appendChild(categoryElement);
+        });
+    } catch (error) {
+        console.error('Error loading dynamic categories:', error);
+    }
+}
+
+function loadDynamicMenuItems() {
+    const savedItems = localStorage.getItem('websiteMenuItems');
+    const savedCategories = localStorage.getItem('websiteCategories');
+    
+    if (!savedItems || !savedCategories) return;
+    
+    try {
+        const menuItems = JSON.parse(savedItems);
+        const categories = JSON.parse(savedCategories);
+        const menuContainer = document.getElementById('menuItems');
+        if (!menuContainer) return;
+        
+        // Remove existing dynamic items (keep static ones for now)
+        const existingDynamicItems = menuContainer.querySelectorAll('.menu-item[data-dynamic="true"]');
+        existingDynamicItems.forEach(item => item.remove());
+        
+        // Add new dynamic items
+        menuItems.forEach(item => {
+            const category = categories.find(cat => cat.id === item.categoryId);
+            if (!category) return;
+            
+            const menuElement = document.createElement('div');
+            menuElement.className = 'menu-item';
+            menuElement.setAttribute('data-category', category.slug);
+            menuElement.setAttribute('data-dynamic', 'true');
+            
+            const imageContent = item.image ? 
+                `<img src="${item.image}" alt="${item.name}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;">` :
+                `<div style="background: linear-gradient(45deg, #ff6b6b, #ff8e8e); width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 4rem; color: white;">${category.emoji}</div>`;
+            
+            menuElement.innerHTML = `
+                <div class="item-image">
+                    ${imageContent}
+                </div>
+                <div class="item-info">
+                    <h3>${item.name}</h3>
+                    <p>${item.description}</p>
+                    <div class="item-price">${item.price.toLocaleString()} ₸</div>
+                    <button class="add-btn" onclick="openModal('${item.name}', ${item.price})">В корзину</button>
+                </div>
+            `;
+            
+            menuContainer.appendChild(menuElement);
+        });
+        
+        console.log(`Загружено ${menuItems.length} динамических блюд`);
+    } catch (error) {
+        console.error('Error loading dynamic menu items:', error);
+    }
+}
 
 // Modal functions
 function openModal(name, price) {
@@ -162,6 +265,9 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('No saved cart found');
         cart = [];
     }
+    
+    // Load dynamic content
+    setTimeout(loadDynamicContent, 500);
 });
 
 // Close modal when clicking outside
