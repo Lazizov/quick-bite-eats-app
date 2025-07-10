@@ -1,5 +1,14 @@
 
+
 let cart = [];
+
+// Import Supabase client
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+
+const SUPABASE_URL = "https://uaaxqorizrzyoikqrkuo.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVhYXhxb3JpenJ6eW9pa3Fya3VvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAzMzM3MDksImV4cCI6MjA2NTkwOTcwOX0.piyGZBU6CPAeFQjOni71t169RJDHcJHIX-LlshXfvzY";
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Telegram bot settings
 const TELEGRAM_BOT_TOKEN = '8002847512:AAFN6L6xzvdvRLdWUnxII5b0ooUppiLptnA';
@@ -177,7 +186,7 @@ function closeSuccessModal() {
 document.addEventListener('DOMContentLoaded', function() {
     const orderForm = document.getElementById('orderForm');
     if (orderForm) {
-        orderForm.addEventListener('submit', function(e) {
+        orderForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             console.log('Order form submitted');
             
@@ -201,28 +210,31 @@ document.addEventListener('DOMContentLoaded', function() {
             
             console.log('Sending order to Telegram:', orderText);
             
-            // Prepare order data for admin panel
-            const orderData = {
-                customerName: name,
-                customerPhone: phone,
-                items: cart.map(item => ({
-                    name: item.name,
-                    price: item.price,
-                    quantity: item.quantity
-                })),
-                total: total
-            };
-            
-            // Send to admin panel
+            // Save order to Supabase
             try {
-                localStorage.setItem('newOrder', JSON.stringify(orderData));
-                // Trigger storage event for admin panel
-                window.dispatchEvent(new StorageEvent('storage', {
-                    key: 'newOrder',
-                    newValue: JSON.stringify(orderData)
-                }));
+                const { data: orderData, error } = await supabase
+                    .from('restaurant_orders')
+                    .insert({
+                        customer_name: name,
+                        customer_phone: phone,
+                        items: cart.map(item => ({
+                            name: item.name,
+                            price: item.price,
+                            quantity: item.quantity
+                        })),
+                        total: total,
+                        status: 'new'
+                    })
+                    .select()
+                    .single();
+
+                if (error) {
+                    console.error('Error saving order to Supabase:', error);
+                } else {
+                    console.log('Order saved to Supabase:', orderData);
+                }
             } catch (error) {
-                console.error('Error saving order to admin panel:', error);
+                console.error('Error saving order to Supabase:', error);
             }
             
             // Send to Telegram
@@ -340,3 +352,4 @@ window.debugCart = function() {
     console.log('Cart length:', cart ? cart.length : 'undefined');
     console.log('=======================');
 };
+

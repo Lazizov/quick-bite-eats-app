@@ -1,7 +1,16 @@
 
+
 let cart = [];
 let currentItem = null;
 let currentQuantity = 1;
+
+// Import Supabase client
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+
+const SUPABASE_URL = "https://uaaxqorizrzyoikqrkuo.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVhYXhxb3JpenJ6eW9pa3Fya3VvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAzMzM3MDksImV4cCI6MjA2NTkwOTcwOX0.piyGZBU6CPAeFQjOni71t169RJDHcJHIX-LlshXfvzY";
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Smooth scroll to menu
 function scrollToMenu() {
@@ -44,18 +53,26 @@ function initializeFiltering() {
     }
 }
 
-// Load dynamic content from admin panel
+// Load dynamic content from Supabase
 function loadDynamicContent() {
     loadDynamicCategories();
     loadDynamicMenuItems();
 }
 
-function loadDynamicCategories() {
-    const savedCategories = localStorage.getItem('websiteCategories');
-    if (!savedCategories) return;
-    
+async function loadDynamicCategories() {
     try {
-        const categories = JSON.parse(savedCategories);
+        const { data: categories, error } = await supabase
+            .from('categories')
+            .select('*')
+            .order('created_at', { ascending: true });
+
+        if (error) {
+            console.error('Error loading categories:', error);
+            return;
+        }
+
+        if (!categories || categories.length === 0) return;
+
         const categoriesContainer = document.querySelector('.categories');
         if (!categoriesContainer) return;
         
@@ -103,15 +120,27 @@ function loadDynamicCategories() {
     }
 }
 
-function loadDynamicMenuItems() {
-    const savedItems = localStorage.getItem('websiteMenuItems');
-    const savedCategories = localStorage.getItem('websiteCategories');
-    
-    if (!savedItems || !savedCategories) return;
-    
+async function loadDynamicMenuItems() {
     try {
-        const menuItems = JSON.parse(savedItems);
-        const categories = JSON.parse(savedCategories);
+        const { data: menuItems, error: itemsError } = await supabase
+            .from('menu_items')
+            .select(`
+                *,
+                categories (
+                    id,
+                    name,
+                    slug
+                )
+            `)
+            .order('created_at', { ascending: true });
+
+        if (itemsError) {
+            console.error('Error loading menu items:', itemsError);
+            return;
+        }
+
+        if (!menuItems || menuItems.length === 0) return;
+        
         const menuContainer = document.getElementById('menuItems');
         if (!menuContainer) return;
         
@@ -121,7 +150,7 @@ function loadDynamicMenuItems() {
         
         // Add new dynamic items
         menuItems.forEach(item => {
-            const category = categories.find(cat => cat.id === item.categoryId);
+            const category = item.categories;
             if (!category) return;
             
             const menuElement = document.createElement('div');
@@ -357,3 +386,4 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
+

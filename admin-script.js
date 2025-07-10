@@ -1,5 +1,14 @@
 
+
 // Admin Panel JavaScript
+
+// Import Supabase client
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+
+const SUPABASE_URL = "https://uaaxqorizrzyoikqrkuo.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVhYXhxb3JpenJ6eW9pa3Fya3VvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAzMzM3MDksImV4cCI6MjA2NTkwOTcwOX0.piyGZBU6CPAeFQjOni71t169RJDHcJHIX-LlshXfvzY";
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let categories = [];
 let menuItems = [];
@@ -108,63 +117,59 @@ function showSection(section) {
     document.getElementById(section + 'NavBtn').classList.add('active');
 }
 
-// Load data from localStorage
-function loadData() {
-    const savedCategories = localStorage.getItem('adminCategories');
-    const savedItems = localStorage.getItem('adminMenuItems');
-    const savedOrders = localStorage.getItem('adminOrders');
-    
-    if (savedCategories) {
-        try {
-            categories = JSON.parse(savedCategories);
-        } catch (error) {
-            console.error('Error loading categories:', error);
-            categories = [];
-        }
-    }
-    
-    if (savedItems) {
-        try {
-            menuItems = JSON.parse(savedItems);
-        } catch (error) {
-            console.error('Error loading menu items:', error);
-            menuItems = [];
-        }
-    }
+// Load data from Supabase
+async function loadData() {
+    try {
+        // Load categories
+        const { data: categoriesData, error: categoriesError } = await supabase
+            .from('categories')
+            .select('*')
+            .order('created_at', { ascending: true });
 
-    if (savedOrders) {
-        try {
-            orders = JSON.parse(savedOrders);
-        } catch (error) {
-            console.error('Error loading orders:', error);
-            orders = [];
+        if (categoriesError) {
+            console.error('Error loading categories:', categoriesError);
+        } else {
+            categories = categoriesData || [];
         }
+
+        // Load menu items
+        const { data: menuItemsData, error: menuItemsError } = await supabase
+            .from('menu_items')
+            .select('*')
+            .order('created_at', { ascending: true });
+
+        if (menuItemsError) {
+            console.error('Error loading menu items:', menuItemsError);
+        } else {
+            menuItems = menuItemsData || [];
+        }
+
+        // Load orders
+        const { data: ordersData, error: ordersError } = await supabase
+            .from('restaurant_orders')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (ordersError) {
+            console.error('Error loading orders:', ordersError);
+        } else {
+            orders = ordersData || [];
+        }
+    } catch (error) {
+        console.error('Error loading data:', error);
     }
 }
 
-// Save data to localStorage
+// Save data is no longer needed as we save directly to Supabase
 function saveData() {
-    try {
-        localStorage.setItem('adminCategories', JSON.stringify(categories));
-        localStorage.setItem('adminMenuItems', JSON.stringify(menuItems));
-        localStorage.setItem('adminOrders', JSON.stringify(orders));
-        
-        // Update main website data
-        updateMainWebsiteData();
-    } catch (error) {
-        console.error('Error saving data:', error);
-        showNotification('Ошибка сохранения данных!', 'error');
-    }
+    // This function is kept for compatibility but data is now saved directly to Supabase
+    console.log('Data is now saved directly to Supabase');
 }
 
-// Update main website data
+// Update main website data is no longer needed as data comes from Supabase
 function updateMainWebsiteData() {
-    try {
-        localStorage.setItem('websiteCategories', JSON.stringify(categories));
-        localStorage.setItem('websiteMenuItems', JSON.stringify(menuItems));
-    } catch (error) {
-        console.error('Error updating website data:', error);
-    }
+    // This function is kept for compatibility but data now comes directly from Supabase
+    console.log('Website data now comes directly from Supabase');
 }
 
 // File upload handlers
@@ -212,7 +217,7 @@ function hideAddCategoryForm() {
     }
 }
 
-function handleAddCategory(e) {
+async function handleAddCategory(e) {
     e.preventDefault();
     
     const name = document.getElementById('categoryName').value.trim();
@@ -235,22 +240,36 @@ function handleAddCategory(e) {
     }
     
     const reader = new FileReader();
-    reader.onload = function(event) {
-        const newCategory = {
-            id: Date.now().toString(),
-            name: name,
-            image: event.target.result,
-            slug: name.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, ''),
-            createdAt: new Date().toISOString()
-        };
+    reader.onload = async function(event) {
+        const slug = name.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, '');
         
-        categories.push(newCategory);
-        saveData();
-        loadCategories();
-        updateCategorySelect();
-        hideAddCategoryForm();
-        
-        showNotification('Категория успешно добавлена!');
+        try {
+            const { data, error } = await supabase
+                .from('categories')
+                .insert({
+                    name: name,
+                    slug: slug,
+                    image: event.target.result
+                })
+                .select()
+                .single();
+
+            if (error) {
+                console.error('Error adding category:', error);
+                showNotification('Ошибка добавления категории!', 'error');
+                return;
+            }
+
+            categories.push(data);
+            loadCategories();
+            updateCategorySelect();
+            hideAddCategoryForm();
+            
+            showNotification('Категория успешно добавлена!');
+        } catch (error) {
+            console.error('Error adding category:', error);
+            showNotification('Ошибка добавления категории!', 'error');
+        }
     };
     reader.readAsDataURL(imageInput.files[0]);
 }
@@ -270,7 +289,7 @@ function loadCategories() {
                 <h3>${category.name}</h3>
                 ${category.image ? `<img src="${category.image}" alt="${category.name}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; margin: 10px 0;">` : ''}
                 <p>ID: ${category.id}</p>
-                <p>Создано: ${new Date(category.createdAt).toLocaleString('ru-RU')}</p>
+                <p>Создано: ${new Date(category.created_at).toLocaleString('ru-RU')}</p>
             </div>
             <div class="item-actions">
                 <button class="delete-btn" onclick="deleteCategory('${category.id}')">Удалить</button>
@@ -279,17 +298,46 @@ function loadCategories() {
     `).join('');
 }
 
-function deleteCategory(categoryId) {
+async function deleteCategory(categoryId) {
     if (confirm('Вы уверены, что хотите удалить эту категорию? Все блюда этой категории также будут удалены.')) {
-        categories = categories.filter(cat => cat.id !== categoryId);
-        menuItems = menuItems.filter(item => item.categoryId !== categoryId);
-        
-        saveData();
-        loadCategories();
-        loadItems();
-        updateCategorySelect();
-        
-        showNotification('Категория удалена!');
+        try {
+            // Delete menu items in this category first
+            const { error: menuItemsError } = await supabase
+                .from('menu_items')
+                .delete()
+                .eq('category_id', categoryId);
+
+            if (menuItemsError) {
+                console.error('Error deleting menu items:', menuItemsError);
+                showNotification('Ошибка удаления блюд категории!', 'error');
+                return;
+            }
+
+            // Delete the category
+            const { error: categoryError } = await supabase
+                .from('categories')
+                .delete()
+                .eq('id', categoryId);
+
+            if (categoryError) {
+                console.error('Error deleting category:', categoryError);
+                showNotification('Ошибка удаления категории!', 'error');
+                return;
+            }
+
+            // Update local data
+            categories = categories.filter(cat => cat.id !== categoryId);
+            menuItems = menuItems.filter(item => item.category_id !== categoryId);
+            
+            loadCategories();
+            loadItems();
+            updateCategorySelect();
+            
+            showNotification('Категория удалена!');
+        } catch (error) {
+            console.error('Error deleting category:', error);
+            showNotification('Ошибка удаления категории!', 'error');
+        }
     }
 }
 
@@ -321,7 +369,7 @@ function updateCategorySelect() {
         categories.map(cat => `<option value="${cat.id}">${cat.name}</option>`).join('');
 }
 
-function handleAddItem(e) {
+async function handleAddItem(e) {
     e.preventDefault();
     
     const name = document.getElementById('itemName').value.trim();
@@ -347,24 +395,35 @@ function handleAddItem(e) {
     }
     
     const reader = new FileReader();
-    reader.onload = function(event) {
-        const newItem = {
-            id: Date.now().toString(),
-            name: name,
-            categoryId: categoryId,
-            categorySlug: category.slug,
-            price: price,
-            image: event.target.result,
-            description: description,
-            createdAt: new Date().toISOString()
-        };
-        
-        menuItems.push(newItem);
-        saveData();
-        loadItems();
-        hideAddItemForm();
-        
-        showNotification('Блюдо успешно добавлено!');
+    reader.onload = async function(event) {
+        try {
+            const { data, error } = await supabase
+                .from('menu_items')
+                .insert({
+                    name: name,
+                    category_id: categoryId,
+                    price: price,
+                    description: description,
+                    image: event.target.result
+                })
+                .select()
+                .single();
+
+            if (error) {
+                console.error('Error adding menu item:', error);
+                showNotification('Ошибка добавления блюда!', 'error');
+                return;
+            }
+
+            menuItems.push(data);
+            loadItems();
+            hideAddItemForm();
+            
+            showNotification('Блюдо успешно добавлено!');
+        } catch (error) {
+            console.error('Error adding menu item:', error);
+            showNotification('Ошибка добавления блюда!', 'error');
+        }
     };
     reader.readAsDataURL(imageInput.files[0]);
 }
@@ -379,7 +438,7 @@ function loadItems() {
     }
     
     container.innerHTML = menuItems.map(item => {
-        const category = categories.find(cat => cat.id === item.categoryId);
+        const category = categories.find(cat => cat.id === item.category_id);
         return `
             <div class="item-card">
                 <div class="item-info">
@@ -388,7 +447,7 @@ function loadItems() {
                     <p><strong>Цена:</strong> ${item.price.toLocaleString()} ₸</p>
                     <p><strong>Описание:</strong> ${item.description}</p>
                     ${item.image ? `<img src="${item.image}" alt="${item.name}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; margin: 10px 0;">` : ''}
-                    <p><strong>Создано:</strong> ${new Date(item.createdAt).toLocaleString('ru-RU')}</p>
+                    <p><strong>Создано:</strong> ${new Date(item.created_at).toLocaleString('ru-RU')}</p>
                 </div>
                 <div class="item-actions">
                     <button class="delete-btn" onclick="deleteItem('${item.id}')">Удалить</button>
@@ -398,12 +457,27 @@ function loadItems() {
     }).join('');
 }
 
-function deleteItem(itemId) {
+async function deleteItem(itemId) {
     if (confirm('Вы уверены, что хотите удалить это блюдо?')) {
-        menuItems = menuItems.filter(item => item.id !== itemId);
-        saveData();
-        loadItems();
-        showNotification('Блюдо удалено!');
+        try {
+            const { error } = await supabase
+                .from('menu_items')
+                .delete()
+                .eq('id', itemId);
+
+            if (error) {
+                console.error('Error deleting menu item:', error);
+                showNotification('Ошибка удаления блюда!', 'error');
+                return;
+            }
+
+            menuItems = menuItems.filter(item => item.id !== itemId);
+            loadItems();
+            showNotification('Блюдо удалено!');
+        } catch (error) {
+            console.error('Error deleting menu item:', error);
+            showNotification('Ошибка удаления блюда!', 'error');
+        }
     }
 }
 
@@ -418,22 +492,22 @@ function loadOrders() {
     }
     
     // Sort orders by date (newest first)
-    const sortedOrders = [...orders].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    const sortedOrders = [...orders].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
     
     container.innerHTML = sortedOrders.map(order => `
         <div class="item-card order-card">
             <div class="item-info">
-                <h3>Заказ #${order.id}</h3>
-                <p><strong>Клиент:</strong> ${order.customerName}</p>
-                <p><strong>Телефон:</strong> ${order.customerPhone}</p>
-                <p><strong>Дата:</strong> ${new Date(order.createdAt).toLocaleString('ru-RU')}</p>
+                <h3>Заказ #${order.id.substring(0, 8)}</h3>
+                <p><strong>Клиент:</strong> ${order.customer_name}</p>
+                <p><strong>Телефон:</strong> ${order.customer_phone}</p>
+                <p><strong>Дата:</strong> ${new Date(order.created_at).toLocaleString('ru-RU')}</p>
                 <p><strong>Статус:</strong> <span class="order-status ${order.status}">${getOrderStatusText(order.status)}</span></p>
                 <div class="order-items">
                     <strong>Заказ:</strong>
                     <ul>
-                        ${order.items.map(item => `
+                        ${Array.isArray(order.items) ? order.items.map(item => `
                             <li>${item.name} - ${item.quantity} шт. × ${item.price} ₸ = ${(item.quantity * item.price).toLocaleString()} ₸</li>
-                        `).join('')}
+                        `).join('') : '<li>Ошибка загрузки данных заказа</li>'}
                     </ul>
                 </div>
                 <p><strong>Итого:</strong> ${order.total.toLocaleString()} ₸</p>
@@ -461,44 +535,64 @@ function getOrderStatusText(status) {
     return statusTexts[status] || 'Неизвестно';
 }
 
-function updateOrderStatus(orderId, newStatus) {
-    const order = orders.find(o => o.id === orderId);
-    if (order) {
-        order.status = newStatus;
-        order.updatedAt = new Date().toISOString();
-        saveData();
+async function updateOrderStatus(orderId, newStatus) {
+    try {
+        const { error } = await supabase
+            .from('restaurant_orders')
+            .update({ 
+                status: newStatus, 
+                updated_at: new Date().toISOString() 
+            })
+            .eq('id', orderId);
+
+        if (error) {
+            console.error('Error updating order status:', error);
+            showNotification('Ошибка обновления статуса заказа!', 'error');
+            return;
+        }
+
+        // Update local data
+        const order = orders.find(o => o.id === orderId);
+        if (order) {
+            order.status = newStatus;
+            order.updated_at = new Date().toISOString();
+        }
+
         showNotification('Статус заказа обновлен!');
+    } catch (error) {
+        console.error('Error updating order status:', error);
+        showNotification('Ошибка обновления статуса заказа!', 'error');
     }
 }
 
-function deleteOrder(orderId) {
+async function deleteOrder(orderId) {
     if (confirm('Вы уверены, что хотите удалить этот заказ?')) {
-        orders = orders.filter(order => order.id !== orderId);
-        saveData();
-        loadOrders();
-        showNotification('Заказ удален!');
+        try {
+            const { error } = await supabase
+                .from('restaurant_orders')
+                .delete()
+                .eq('id', orderId);
+
+            if (error) {
+                console.error('Error deleting order:', error);
+                showNotification('Ошибка удаления заказа!', 'error');
+                return;
+            }
+
+            orders = orders.filter(order => order.id !== orderId);
+            loadOrders();
+            showNotification('Заказ удален!');
+        } catch (error) {
+            console.error('Error deleting order:', error);
+            showNotification('Ошибка удаления заказа!', 'error');
+        }
     }
 }
 
-// Add new order (called from cart)
+// Add new order (no longer needed as orders come from Supabase)
 function addNewOrder(orderData) {
-    const newOrder = {
-        id: Date.now().toString(),
-        customerName: orderData.customerName,
-        customerPhone: orderData.customerPhone,
-        items: orderData.items,
-        total: orderData.total,
-        status: 'new',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-    };
-    
-    orders.push(newOrder);
-    saveData();
-    
-    if (document.getElementById('ordersList')) {
-        loadOrders();
-    }
+    // This function is kept for compatibility but orders now come directly from Supabase
+    console.log('Orders now come directly from Supabase');
 }
 
 // Make function available globally
@@ -544,18 +638,11 @@ function initializeDefaultData() {
     }
 }
 
-// Listen for new orders from other pages
-window.addEventListener('storage', function(e) {
-    if (e.key === 'newOrder') {
-        const orderData = JSON.parse(e.newValue);
-        if (orderData) {
-            addNewOrder(orderData);
-            localStorage.removeItem('newOrder'); // Clean up
-        }
-    }
-});
+// Listen for new orders from Supabase real-time (optional enhancement)
+// You can implement real-time updates here if needed
 
 // Call initialization when admin panel loads
 document.addEventListener('DOMContentLoaded', function() {
     setTimeout(initializeDefaultData, 1000);
 });
+
