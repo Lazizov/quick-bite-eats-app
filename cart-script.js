@@ -1,6 +1,7 @@
+
 let cart = [];
 
-// Telegram bot settings - добавьте ваши настройки здесь
+// Telegram bot settings
 const TELEGRAM_BOT_TOKEN = '8002847512:AAFN6L6xzvdvRLdWUnxII5b0ooUppiLptnA';
 const TELEGRAM_CHAT_ID = '758761122';
 
@@ -18,8 +19,6 @@ function loadCart() {
         try {
             cart = JSON.parse(savedCart);
             console.log('Parsed cart data:', cart);
-            console.log('Cart length:', cart.length);
-            console.log('Cart is array:', Array.isArray(cart));
         } catch (error) {
             console.error('Error parsing cart data:', error);
             cart = [];
@@ -29,7 +28,6 @@ function loadCart() {
         cart = [];
     }
     
-    // Дополнительная проверка структуры данных
     if (!Array.isArray(cart)) {
         console.error('Cart is not an array, resetting to empty array');
         cart = [];
@@ -39,26 +37,22 @@ function loadCart() {
 }
 
 function saveCart() {
-    localStorage.setItem('restaurantCart', JSON.stringify(cart));
-    console.log('Cart saved to localStorage:', cart);
+    try {
+        localStorage.setItem('restaurantCart', JSON.stringify(cart));
+        console.log('Cart saved to localStorage:', cart);
+    } catch (error) {
+        console.error('Error saving cart:', error);
+    }
 }
 
 function renderCart() {
     console.log('=== RENDER CART START ===');
     console.log('Current cart:', cart);
-    console.log('Cart length:', cart.length);
     
     const cartItemsContainer = document.getElementById('cartItems');
     const cartTotalContainer = document.getElementById('cartTotal');
     const emptyCartContainer = document.getElementById('emptyCart');
     const orderSection = document.getElementById('orderSection');
-    
-    console.log('Cart elements found:', {
-        cartItems: !!cartItemsContainer,
-        cartTotal: !!cartTotalContainer,
-        emptyCart: !!emptyCartContainer,
-        orderSection: !!orderSection
-    });
     
     if (!cartItemsContainer || !cartTotalContainer || !emptyCartContainer || !orderSection) {
         console.error('Required cart elements not found in DOM');
@@ -86,14 +80,8 @@ function renderCart() {
     cart.forEach((item, index) => {
         console.log(`Rendering item ${index}:`, item);
         
-        // Проверка валидности элемента
-        if (!item || typeof item !== 'object') {
+        if (!item || typeof item !== 'object' || !item.name || !item.price || !item.quantity) {
             console.error(`Invalid item at index ${index}:`, item);
-            return;
-        }
-        
-        if (!item.name || !item.price || !item.quantity) {
-            console.error(`Item missing required properties at index ${index}:`, item);
             return;
         }
         
@@ -114,7 +102,6 @@ function renderCart() {
             </div>
         `;
         cartItemsContainer.appendChild(cartItemElement);
-        console.log(`Item ${index} rendered successfully`);
     });
     
     // Update total
@@ -122,7 +109,6 @@ function renderCart() {
         if (item && typeof item.price === 'number' && typeof item.quantity === 'number') {
             return sum + (item.price * item.quantity);
         }
-        console.error('Invalid item for total calculation:', item);
         return sum;
     }, 0);
     
@@ -181,9 +167,7 @@ function closeSuccessModal() {
         modal.classList.remove('show');
     }
     
-    // Clear cart and close window
-    cart = [];
-    saveCart();
+    // Close window after short delay
     setTimeout(() => {
         window.close();
     }, 500);
@@ -217,8 +201,35 @@ document.addEventListener('DOMContentLoaded', function() {
             
             console.log('Sending order to Telegram:', orderText);
             
+            // Prepare order data for admin panel
+            const orderData = {
+                customerName: name,
+                customerPhone: phone,
+                items: cart.map(item => ({
+                    name: item.name,
+                    price: item.price,
+                    quantity: item.quantity
+                })),
+                total: total
+            };
+            
+            // Send to admin panel
+            try {
+                localStorage.setItem('newOrder', JSON.stringify(orderData));
+                // Trigger storage event for admin panel
+                window.dispatchEvent(new StorageEvent('storage', {
+                    key: 'newOrder',
+                    newValue: JSON.stringify(orderData)
+                }));
+            } catch (error) {
+                console.error('Error saving order to admin panel:', error);
+            }
+            
             // Send to Telegram
             sendToTelegram(orderText);
+            
+            // Clear cart immediately
+            clearCart();
             
             // Close order form and show success
             closeOrderForm();
@@ -233,15 +244,11 @@ document.addEventListener('DOMContentLoaded', function() {
 async function sendToTelegram(orderText) {
     console.log('Attempting to send to Telegram...');
     
-    // Проверяем, настроены ли параметры Telegram
     if (TELEGRAM_BOT_TOKEN === 'YOUR_BOT_TOKEN_HERE' || TELEGRAM_CHAT_ID === 'YOUR_CHAT_ID_HERE') {
         console.log('Telegram not configured, showing message in console only');
         console.log('=== ЗАКАЗ ДЛЯ TELEGRAM ===');
         console.log(orderText);
         console.log('=== КОНЕЦ ЗАКАЗА ===');
-        
-        // Показываем пользователю что заказ готов, но не отправлен
-        alert('Заказ сформирован! Telegram бот не настроен. Проверьте консоль для деталей заказа.');
         return;
     }
     
@@ -263,26 +270,21 @@ async function sendToTelegram(orderText) {
         
         if (result.ok) {
             console.log('Order sent to Telegram successfully');
-            // Clear cart after successful order
-            clearCartAfterOrder();
         } else {
             console.error('Failed to send to Telegram:', result);
             console.log('Order details (fallback):', orderText);
-            // Still clear cart even if telegram fails
-            clearCartAfterOrder();
         }
     } catch (error) {
         console.error('Error sending to Telegram:', error);
         console.log('Order details (fallback):', orderText);
-        // Still clear cart even if telegram fails
-        clearCartAfterOrder();
     }
 }
 
-function clearCartAfterOrder() {
-    console.log('Clearing cart after order...');
+function clearCart() {
+    console.log('Clearing cart...');
     cart = [];
     localStorage.removeItem('restaurantCart');
+    renderCart();
     console.log('Cart cleared successfully');
 }
 
@@ -330,7 +332,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-// Дополнительная функция для отладки - вызывать из консоли
+// Debug function
 window.debugCart = function() {
     console.log('=== DEBUG CART INFO ===');
     console.log('localStorage data:', localStorage.getItem('restaurantCart'));

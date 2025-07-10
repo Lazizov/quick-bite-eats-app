@@ -1,3 +1,4 @@
+
 let cart = [];
 let currentItem = null;
 let currentQuantity = 1;
@@ -9,6 +10,12 @@ function scrollToMenu() {
 
 // Category filtering
 document.addEventListener('DOMContentLoaded', function() {
+    initializeFiltering();
+    loadDynamicContent();
+    loadCartFromStorage();
+});
+
+function initializeFiltering() {
     const categoryItems = document.querySelectorAll('.category-item');
     const menuItems = document.querySelectorAll('.menu-item');
     
@@ -25,7 +32,8 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     function filterItems(category) {
-        menuItems.forEach(item => {
+        const allMenuItems = document.querySelectorAll('.menu-item');
+        allMenuItems.forEach(item => {
             if (category === 'all' || item.dataset.category === category) {
                 item.classList.remove('hidden');
                 item.style.animation = 'fadeInUp 0.5s ease-out';
@@ -34,7 +42,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-});
+}
 
 // Load dynamic content from admin panel
 function loadDynamicContent() {
@@ -64,9 +72,13 @@ function loadDynamicCategories() {
             const categoryElement = document.createElement('div');
             categoryElement.className = 'category-item';
             categoryElement.setAttribute('data-category', category.slug);
+            
             categoryElement.innerHTML = `
                 <div class="category-image">
-                    <span style="font-size: 2rem;">${category.emoji}</span>
+                    ${category.image ? 
+                        `<img src="${category.image}" alt="${category.name}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 50%;">` :
+                        `<span style="font-size: 2rem;">📂</span>`
+                    }
                 </div>
                 <span>${category.name}</span>
             `;
@@ -84,6 +96,8 @@ function loadDynamicCategories() {
             
             categoriesContainer.appendChild(categoryElement);
         });
+        
+        console.log(`Загружено ${categories.length} динамических категорий`);
     } catch (error) {
         console.error('Error loading dynamic categories:', error);
     }
@@ -101,7 +115,7 @@ function loadDynamicMenuItems() {
         const menuContainer = document.getElementById('menuItems');
         if (!menuContainer) return;
         
-        // Remove existing dynamic items (keep static ones for now)
+        // Remove existing dynamic items
         const existingDynamicItems = menuContainer.querySelectorAll('.menu-item[data-dynamic="true"]');
         existingDynamicItems.forEach(item => item.remove());
         
@@ -117,7 +131,7 @@ function loadDynamicMenuItems() {
             
             const imageContent = item.image ? 
                 `<img src="${item.image}" alt="${item.name}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;">` :
-                `<div style="background: linear-gradient(45deg, #ff6b6b, #ff8e8e); width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 4rem; color: white;">${category.emoji}</div>`;
+                `<div style="background: linear-gradient(45deg, #ff6b6b, #ff8e8e); width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 4rem; color: white;">🍽️</div>`;
             
             menuElement.innerHTML = `
                 <div class="item-image">
@@ -135,6 +149,9 @@ function loadDynamicMenuItems() {
         });
         
         console.log(`Загружено ${menuItems.length} динамических блюд`);
+        
+        // Re-initialize filtering for new items
+        initializeFiltering();
     } catch (error) {
         console.error('Error loading dynamic menu items:', error);
     }
@@ -205,16 +222,24 @@ function updateCartCount() {
     console.log('Current cart:', cart);
     
     // Save to localStorage
-    localStorage.setItem('restaurantCart', JSON.stringify(cart));
-    console.log('Cart saved to localStorage');
+    try {
+        localStorage.setItem('restaurantCart', JSON.stringify(cart));
+        console.log('Cart saved to localStorage');
+    } catch (error) {
+        console.error('Error saving cart to localStorage:', error);
+    }
 }
 
 function openCart() {
     console.log('Opening cart with items:', cart);
     // Save cart to localStorage before opening cart page
-    localStorage.setItem('restaurantCart', JSON.stringify(cart));
-    // Open cart page
-    window.open('cart.html', '_blank');
+    try {
+        localStorage.setItem('restaurantCart', JSON.stringify(cart));
+        // Open cart page
+        window.open('cart.html', '_blank');
+    } catch (error) {
+        console.error('Error opening cart:', error);
+    }
 }
 
 function showNotification(message) {
@@ -249,13 +274,29 @@ function showNotification(message) {
 }
 
 // Load cart from localStorage on page load
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('Page loaded, loading cart from localStorage');
+function loadCartFromStorage() {
+    console.log('Loading cart from localStorage');
     const savedCart = localStorage.getItem('restaurantCart');
     if (savedCart) {
         try {
             cart = JSON.parse(savedCart);
             console.log('Cart loaded from localStorage:', cart);
+            
+            // Validate cart data
+            if (!Array.isArray(cart)) {
+                console.error('Invalid cart data, resetting');
+                cart = [];
+            } else {
+                // Filter out invalid items
+                cart = cart.filter(item => 
+                    item && 
+                    typeof item === 'object' && 
+                    item.name && 
+                    typeof item.price === 'number' && 
+                    typeof item.quantity === 'number'
+                );
+            }
+            
             updateCartCount();
         } catch (error) {
             console.error('Error loading cart from localStorage:', error);
@@ -265,10 +306,7 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('No saved cart found');
         cart = [];
     }
-    
-    // Load dynamic content
-    setTimeout(loadDynamicContent, 500);
-});
+}
 
 // Close modal when clicking outside
 document.addEventListener('DOMContentLoaded', function() {
@@ -280,6 +318,13 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+    
+    // Listen for storage changes (cart updates)
+    window.addEventListener('storage', function(e) {
+        if (e.key === 'restaurantCart') {
+            loadCartFromStorage();
+        }
+    });
 });
 
 // Add CSS for notifications
@@ -305,6 +350,10 @@ style.textContent = `
             transform: translateX(100%);
             opacity: 0;
         }
+    }
+    
+    .hidden {
+        display: none !important;
     }
 `;
 document.head.appendChild(style);
