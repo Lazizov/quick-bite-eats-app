@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -9,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { Trash2, Plus, Eye, EyeOff } from 'lucide-react';
+import type { Json } from '@/integrations/supabase/types';
 
 interface Category {
   id: string;
@@ -32,7 +32,7 @@ interface Order {
   id: string;
   customer_name: string;
   customer_phone: string;
-  items: any[];
+  items: Json;
   total: number;
   status: string;
   created_at: string;
@@ -327,6 +327,17 @@ export default function AdminPanel() {
         }
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+  const parseOrderItems = (items: Json): any[] => {
+    if (Array.isArray(items)) {
+      return items;
+    }
+    try {
+      return Array.isArray(items) ? items : [];
+    } catch {
+      return [];
     }
   };
 
@@ -639,61 +650,64 @@ export default function AdminPanel() {
               {orders.length === 0 ? (
                 <p className="text-center text-gray-500 py-8">Заказы не найдены.</p>
               ) : (
-                orders.map((order) => (
-                  <Card key={order.id} className={`border-l-4 ${
-                    order.status === 'new' ? 'border-l-red-500' :
-                    order.status === 'preparing' ? 'border-l-yellow-500' :
-                    order.status === 'ready' ? 'border-l-green-500' :
-                    'border-l-gray-500'
-                  }`}>
-                    <CardContent className="p-4">
-                      <div className="flex justify-between items-start mb-4">
-                        <div>
-                          <h3 className="font-semibold">Заказ #{order.id.slice(0, 8)}</h3>
-                          <p className="text-sm text-gray-600">Клиент: {order.customer_name}</p>
-                          <p className="text-sm text-gray-600">Телефон: {order.customer_phone}</p>
-                          <p className="text-sm text-gray-600">
-                            Дата: {new Date(order.created_at).toLocaleString('ru-RU')}
-                          </p>
+                orders.map((order) => {
+                  const orderItems = parseOrderItems(order.items);
+                  return (
+                    <Card key={order.id} className={`border-l-4 ${
+                      order.status === 'new' ? 'border-l-red-500' :
+                      order.status === 'preparing' ? 'border-l-yellow-500' :
+                      order.status === 'ready' ? 'border-l-green-500' :
+                      'border-l-gray-500'
+                    }`}>
+                      <CardContent className="p-4">
+                        <div className="flex justify-between items-start mb-4">
+                          <div>
+                            <h3 className="font-semibold">Заказ #{order.id.slice(0, 8)}</h3>
+                            <p className="text-sm text-gray-600">Клиент: {order.customer_name}</p>
+                            <p className="text-sm text-gray-600">Телефон: {order.customer_phone}</p>
+                            <p className="text-sm text-gray-600">
+                              Дата: {new Date(order.created_at).toLocaleString('ru-RU')}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <select
+                              value={order.status}
+                              onChange={(e) => updateOrderStatus(order.id, e.target.value)}
+                              className="p-1 border rounded text-sm"
+                            >
+                              <option value="new">Новый</option>
+                              <option value="preparing">Готовится</option>
+                              <option value="ready">Готов</option>
+                              <option value="delivered">Доставлен</option>
+                            </select>
+                            <span className={`px-2 py-1 rounded text-xs font-semibold ${
+                              order.status === 'new' ? 'bg-red-100 text-red-800' :
+                              order.status === 'preparing' ? 'bg-yellow-100 text-yellow-800' :
+                              order.status === 'ready' ? 'bg-green-100 text-green-800' :
+                              'bg-gray-100 text-gray-800'
+                            }`}>
+                              {order.status === 'new' ? 'Новый' :
+                               order.status === 'preparing' ? 'Готовится' :
+                               order.status === 'ready' ? 'Готов' :
+                               'Доставлен'}
+                            </span>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <select
-                            value={order.status}
-                            onChange={(e) => updateOrderStatus(order.id, e.target.value)}
-                            className="p-1 border rounded text-sm"
-                          >
-                            <option value="new">Новый</option>
-                            <option value="preparing">Готовится</option>
-                            <option value="ready">Готов</option>
-                            <option value="delivered">Доставлен</option>
-                          </select>
-                          <span className={`px-2 py-1 rounded text-xs font-semibold ${
-                            order.status === 'new' ? 'bg-red-100 text-red-800' :
-                            order.status === 'preparing' ? 'bg-yellow-100 text-yellow-800' :
-                            order.status === 'ready' ? 'bg-green-100 text-green-800' :
-                            'bg-gray-100 text-gray-800'
-                          }`}>
-                            {order.status === 'new' ? 'Новый' :
-                             order.status === 'preparing' ? 'Готовится' :
-                             order.status === 'ready' ? 'Готов' :
-                             'Доставлен'}
-                          </span>
+                        <div className="mb-4">
+                          <strong className="text-sm">Заказ:</strong>
+                          <ul className="list-disc list-inside text-sm text-gray-600 mt-1">
+                            {orderItems.map((item: any, index: number) => (
+                              <li key={index}>
+                                {item.name} - {item.quantity} шт. × {item.price} ₸ = {(item.quantity * item.price).toLocaleString()} ₸
+                              </li>
+                            ))}
+                          </ul>
                         </div>
-                      </div>
-                      <div className="mb-4">
-                        <strong className="text-sm">Заказ:</strong>
-                        <ul className="list-disc list-inside text-sm text-gray-600 mt-1">
-                          {order.items.map((item: any, index: number) => (
-                            <li key={index}>
-                              {item.name} - {item.quantity} шт. × {item.price} ₸ = {(item.quantity * item.price).toLocaleString()} ₸
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                      <p className="font-semibold">Итого: {order.total.toLocaleString()} ₸</p>
-                    </CardContent>
-                  </Card>
-                ))
+                        <p className="font-semibold">Итого: {order.total.toLocaleString()} ₸</p>
+                      </CardContent>
+                    </Card>
+                  );
+                })
               )}
             </div>
           </TabsContent>
