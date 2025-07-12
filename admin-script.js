@@ -1,5 +1,4 @@
 
-
 // Admin Panel JavaScript
 
 // Import Supabase client
@@ -17,6 +16,7 @@ let isLoggedIn = false;
 
 // Initialize admin panel
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('Admin panel initializing...');
     checkLoginStatus();
     loadData();
     setupEventListeners();
@@ -25,6 +25,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // Check if user is already logged in
 function checkLoginStatus() {
     const loginStatus = sessionStorage.getItem('adminLoggedIn');
+    console.log('Login status check:', loginStatus);
     if (loginStatus === 'true') {
         isLoggedIn = true;
         showAdminPanel();
@@ -36,7 +37,11 @@ function setupEventListeners() {
     // Login form
     const loginForm = document.getElementById('loginForm');
     if (loginForm) {
-        loginForm.addEventListener('submit', handleLogin);
+        loginForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            console.log('Login form submitted');
+            handleLogin(e);
+        });
     }
 
     // Category form
@@ -63,34 +68,64 @@ function setupEventListeners() {
     }
 }
 
-// Handle login
+// Handle login - FIXED
 function handleLogin(e) {
     e.preventDefault();
+    console.log('Handling login...');
     
-    const username = document.getElementById('username').value;
-    const password = document.getElementById('password').value;
+    const usernameInput = document.getElementById('username');
+    const passwordInput = document.getElementById('password');
+    
+    if (!usernameInput || !passwordInput) {
+        console.error('Login inputs not found');
+        return;
+    }
+    
+    const username = usernameInput.value.trim();
+    const password = passwordInput.value.trim();
+    
+    console.log('Login attempt with username:', username);
     
     if (username === 'admin' && password === 'admin') {
+        console.log('Login successful');
         isLoggedIn = true;
         sessionStorage.setItem('adminLoggedIn', 'true');
         showAdminPanel();
         showNotification('Добро пожаловать в админ панель!');
     } else {
+        console.log('Login failed - incorrect credentials');
         showNotification('Неверный логин или пароль!', 'error');
+        // Clear the form
+        usernameInput.value = '';
+        passwordInput.value = '';
     }
 }
 
-// Show admin panel
+// Show admin panel - IMPROVED
 function showAdminPanel() {
-    document.getElementById('loginContainer').style.display = 'none';
-    document.getElementById('adminPanel').style.display = 'block';
-    loadCategories();
-    loadItems();
-    loadOrders();
+    console.log('Showing admin panel...');
+    const loginContainer = document.getElementById('loginContainer');
+    const adminPanel = document.getElementById('adminPanel');
+    
+    if (loginContainer) {
+        loginContainer.style.display = 'none';
+    }
+    if (adminPanel) {
+        adminPanel.style.display = 'block';
+    }
+    
+    // Load all data when showing admin panel
+    loadData().then(() => {
+        loadCategories();
+        loadItems();
+        loadOrders();
+        updateOrderStats();
+    });
 }
 
 // Logout
 function logout() {
+    console.log('Logging out...');
     isLoggedIn = false;
     sessionStorage.removeItem('adminLoggedIn');
     document.getElementById('loginContainer').style.display = 'flex';
@@ -115,10 +150,16 @@ function showSection(section) {
     // Show selected section
     document.getElementById(section + 'Section').style.display = 'block';
     document.getElementById(section + 'NavBtn').classList.add('active');
+    
+    // Update order stats when showing orders section
+    if (section === 'orders') {
+        updateOrderStats();
+    }
 }
 
-// Load data from Supabase
+// Load data from Supabase - IMPROVED
 async function loadData() {
+    console.log('Loading data from Supabase...');
     try {
         // Load categories
         const { data: categoriesData, error: categoriesError } = await supabase
@@ -130,6 +171,7 @@ async function loadData() {
             console.error('Error loading categories:', categoriesError);
         } else {
             categories = categoriesData || [];
+            console.log('Categories loaded:', categories.length);
         }
 
         // Load menu items
@@ -142,6 +184,7 @@ async function loadData() {
             console.error('Error loading menu items:', menuItemsError);
         } else {
             menuItems = menuItemsData || [];
+            console.log('Menu items loaded:', menuItems.length);
         }
 
         // Load orders
@@ -154,22 +197,13 @@ async function loadData() {
             console.error('Error loading orders:', ordersError);
         } else {
             orders = ordersData || [];
+            console.log('Orders loaded:', orders.length);
         }
+        
+        console.log('All data loaded successfully');
     } catch (error) {
         console.error('Error loading data:', error);
     }
-}
-
-// Save data is no longer needed as we save directly to Supabase
-function saveData() {
-    // This function is kept for compatibility but data is now saved directly to Supabase
-    console.log('Data is now saved directly to Supabase');
-}
-
-// Update main website data is no longer needed as data comes from Supabase
-function updateMainWebsiteData() {
-    // This function is kept for compatibility but data now comes directly from Supabase
-    console.log('Website data now comes directly from Supabase');
 }
 
 // File upload handlers
@@ -495,7 +529,7 @@ function loadOrders() {
     const sortedOrders = [...orders].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
     
     container.innerHTML = sortedOrders.map(order => `
-        <div class="item-card order-card">
+        <div class="item-card order-card ${order.status}">
             <div class="item-info">
                 <h3>Заказ #${order.id.substring(0, 8)}</h3>
                 <p><strong>Клиент:</strong> ${order.customer_name}</p>
@@ -535,6 +569,20 @@ function getOrderStatusText(status) {
     return statusTexts[status] || 'Неизвестно';
 }
 
+function updateOrderStats() {
+    const totalOrders = orders.length;
+    const newOrders = orders.filter(order => order.status === 'new').length;
+    const preparingOrders = orders.filter(order => order.status === 'preparing').length;
+    
+    const totalElement = document.getElementById('totalOrders');
+    const newElement = document.getElementById('newOrders');
+    const preparingElement = document.getElementById('preparingOrders');
+    
+    if (totalElement) totalElement.textContent = totalOrders;
+    if (newElement) newElement.textContent = newOrders;
+    if (preparingElement) preparingElement.textContent = preparingOrders;
+}
+
 async function updateOrderStatus(orderId, newStatus) {
     try {
         const { error } = await supabase
@@ -558,6 +606,7 @@ async function updateOrderStatus(orderId, newStatus) {
             order.updated_at = new Date().toISOString();
         }
 
+        updateOrderStats();
         showNotification('Статус заказа обновлен!');
     } catch (error) {
         console.error('Error updating order status:', error);
@@ -581,6 +630,7 @@ async function deleteOrder(orderId) {
 
             orders = orders.filter(order => order.id !== orderId);
             loadOrders();
+            updateOrderStats();
             showNotification('Заказ удален!');
         } catch (error) {
             console.error('Error deleting order:', error);
@@ -588,15 +638,6 @@ async function deleteOrder(orderId) {
         }
     }
 }
-
-// Add new order (no longer needed as orders come from Supabase)
-function addNewOrder(orderData) {
-    // This function is kept for compatibility but orders now come directly from Supabase
-    console.log('Orders now come directly from Supabase');
-}
-
-// Make function available globally
-window.addNewOrder = addNewOrder;
 
 // Notifications
 function showNotification(message, type = 'success') {
@@ -630,19 +671,14 @@ function showNotification(message, type = 'success') {
     }, 3000);
 }
 
-// Initialize with default categories if none exist
-function initializeDefaultData() {
-    if (categories.length === 0) {
-        console.log('Initializing with default data...');
-        // We'll let users add their own categories with images
-    }
-}
-
-// Listen for new orders from Supabase real-time (optional enhancement)
-// You can implement real-time updates here if needed
-
-// Call initialization when admin panel loads
-document.addEventListener('DOMContentLoaded', function() {
-    setTimeout(initializeDefaultData, 1000);
-});
-
+// Make functions globally available
+window.showSection = showSection;
+window.logout = logout;
+window.showAddCategoryForm = showAddCategoryForm;
+window.hideAddCategoryForm = hideAddCategoryForm;
+window.deleteCategory = deleteCategory;
+window.showAddItemForm = showAddItemForm;
+window.hideAddItemForm = hideAddItemForm;
+window.deleteItem = deleteItem;
+window.updateOrderStatus = updateOrderStatus;
+window.deleteOrder = deleteOrder;
