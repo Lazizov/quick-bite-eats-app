@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Badge } from '@/components/ui/badge';
 import { ShoppingCart, Plus, Minus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface Category {
   id: string;
@@ -46,17 +47,22 @@ const RestaurantMenu = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
+    console.log('RestaurantMenu component mounted');
     loadData();
     loadCartFromStorage();
   }, []);
 
   useEffect(() => {
+    console.log('Filtering items for category:', selectedCategory);
     if (selectedCategory === 'all') {
       setFilteredItems(menuItems);
     } else {
-      setFilteredItems(menuItems.filter(item => item.category_id === selectedCategory));
+      const filtered = menuItems.filter(item => item.category_id === selectedCategory);
+      console.log('Filtered items:', filtered);
+      setFilteredItems(filtered);
     }
   }, [selectedCategory, menuItems]);
 
@@ -81,10 +87,7 @@ const RestaurantMenu = () => {
             direction = 1;
           }
           
-          scrollContainer.scrollTo({
-            left: scrollPosition,
-            behavior: 'smooth'
-          });
+          scrollContainer.scrollLeft = scrollPosition;
         }
       };
 
@@ -233,33 +236,12 @@ const RestaurantMenu = () => {
     
     closeModal();
     
-    // Show notification
-    showNotification(`${selectedItem.name} добавлен в корзину!`);
-  };
-
-  const showNotification = (message: string) => {
-    const notification = document.createElement('div');
-    notification.style.cssText = `
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      background: #f39c12;
-      color: white;
-      padding: 15px 20px;
-      border-radius: 8px;
-      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-      z-index: 2000;
-      animation: slideInRight 0.3s ease-out;
-    `;
-    notification.textContent = message;
-    
-    document.body.appendChild(notification);
-    
-    setTimeout(() => {
-      if (document.body.contains(notification)) {
-        document.body.removeChild(notification);
-      }
-    }, 3000);
+    // Show toast notification
+    toast({
+      title: "Добавлено в корзину",
+      description: `${selectedItem.name} добавлен в корзину!`,
+      duration: 3000,
+    });
   };
 
   const getTotalItems = () => {
@@ -267,16 +249,26 @@ const RestaurantMenu = () => {
   };
 
   const scrollToMenu = () => {
-    document.getElementById('menu')?.scrollIntoView({ behavior: 'smooth' });
+    const menuElement = document.getElementById('menu');
+    if (menuElement) {
+      menuElement.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
   const handleCartClick = () => {
     console.log('Cart clicked, items:', cart);
     if (cart.length > 0) {
-      // Here you can implement cart page or modal
-      alert(`В корзине ${getTotalItems()} товаров`);
+      toast({
+        title: "Корзина",
+        description: `В корзине ${getTotalItems()} товаров`,
+        duration: 3000,
+      });
     } else {
-      alert('Корзина пуста');
+      toast({
+        title: "Корзина пуста",
+        description: "Добавьте товары для оформления заказа",
+        duration: 3000,
+      });
     }
   };
 
@@ -362,7 +354,11 @@ const RestaurantMenu = () => {
             <div className="block md:hidden">
               <div 
                 ref={scrollRef}
-                className="flex gap-4 overflow-x-auto scrollbar-hide pb-4"
+                className="flex gap-4 overflow-x-auto pb-4"
+                style={{
+                  scrollbarWidth: 'none',
+                  msOverflowStyle: 'none',
+                }}
               >
                 <Card 
                   className={`flex-shrink-0 cursor-pointer transition-all duration-300 ${

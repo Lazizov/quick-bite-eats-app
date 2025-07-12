@@ -1,9 +1,9 @@
 
 #root {
-  max-width: 1280px;
+  max-width: 100%;
   margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  padding: 0;
+  text-align: left;
 }
 
 .logo {
@@ -70,40 +70,29 @@
   }
 }
 
-/* Notification animations */
-@keyframes slideInRight {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
-
-@keyframes slideOutRight {
-  from {
-    transform: translateX(0);
-    opacity: 1;
-  }
-  to {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-}
-
-.hidden {
-  display: none !important;
-}
-
-/* Smooth auto-scroll animation */
-.auto-scroll {
-  animation: autoScrollAnimation 30s linear infinite;
-}
-
+/* Auto-scroll animation for categories */
 @keyframes autoScrollAnimation {
   0% { transform: translateX(0); }
   50% { transform: translateX(-50%); }
   100% { transform: translateX(0); }
+}
+
+/* Line clamp utility */
+.line-clamp-2 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+/* Make sure body and html take full height */
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+/* Ensure scrolling works properly */
+* {
+  box-sizing: border-box;
 }
