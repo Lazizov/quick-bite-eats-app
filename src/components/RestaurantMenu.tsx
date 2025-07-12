@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -7,7 +7,6 @@ import { Badge } from '@/components/ui/badge';
 import { ShoppingCart, Plus, Minus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 
 interface Category {
   id: string;
@@ -46,6 +45,7 @@ const RestaurantMenu = () => {
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(true);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     loadData();
@@ -58,6 +58,51 @@ const RestaurantMenu = () => {
       setFilteredItems(menuItems.filter(item => item.category_id === selectedCategory));
     }
   }, [selectedCategory, menuItems]);
+
+  // Auto-scroll effect for mobile categories
+  useEffect(() => {
+    if (scrollRef.current && categories.length > 0) {
+      const scrollContainer = scrollRef.current;
+      let scrollAmount = 0;
+      const scrollStep = 1;
+      const scrollDelay = 50;
+      
+      const autoScroll = () => {
+        if (scrollContainer) {
+          scrollAmount += scrollStep;
+          if (scrollAmount >= scrollContainer.scrollWidth - scrollContainer.clientWidth) {
+            scrollAmount = 0;
+          }
+          scrollContainer.scrollTo({
+            left: scrollAmount,
+            behavior: 'smooth'
+          });
+        }
+      };
+
+      const intervalId = setInterval(autoScroll, scrollDelay);
+      
+      // Pause auto-scroll on user interaction
+      const handleUserInteraction = () => {
+        clearInterval(intervalId);
+        setTimeout(() => {
+          const newIntervalId = setInterval(autoScroll, scrollDelay);
+          return () => clearInterval(newIntervalId);
+        }, 3000); // Resume after 3 seconds
+      };
+
+      scrollContainer.addEventListener('touchstart', handleUserInteraction);
+      scrollContainer.addEventListener('mousedown', handleUserInteraction);
+
+      return () => {
+        clearInterval(intervalId);
+        if (scrollContainer) {
+          scrollContainer.removeEventListener('touchstart', handleUserInteraction);
+          scrollContainer.removeEventListener('mousedown', handleUserInteraction);
+        }
+      };
+    }
+  }, [categories]);
 
   const loadData = async () => {
     try {
@@ -213,69 +258,64 @@ const RestaurantMenu = () => {
         <div className="container mx-auto px-4">
           <h2 className="text-4xl font-bold text-center mb-12 text-gray-800">Наше меню</h2>
           
-          {/* Categories with Auto-scroll Carousel for Mobile */}
+          {/* Categories */}
           <div className="mb-12">
+            {/* Mobile horizontal scroll with auto-scroll */}
             <div className="block md:hidden">
-              {/* Mobile carousel with auto-scroll */}
-              <Carousel 
-                className="w-full max-w-sm mx-auto"
-                opts={{
-                  align: "start",
-                  loop: true,
+              <div 
+                ref={scrollRef}
+                className="flex gap-4 overflow-x-auto scrollbar-hide pb-4"
+                style={{
+                  scrollbarWidth: 'none',
+                  msOverflowStyle: 'none',
+                  WebkitScrollbar: { display: 'none' }
                 }}
               >
-                <CarouselContent className="-ml-2 md:-ml-4">
-                  <CarouselItem className="pl-2 md:pl-4 basis-1/3">
-                    <Card 
-                      className={`cursor-pointer transition-all duration-300 ${
-                        selectedCategory === 'all' 
-                          ? 'ring-2 ring-orange-500 shadow-lg' 
-                          : 'hover:shadow-md'
-                      }`}
-                      onClick={() => handleCategoryClick('all')}
-                    >
-                      <CardContent className="p-4 text-center">
-                        <div className="w-12 h-12 mx-auto mb-2 bg-gradient-to-r from-orange-400 to-red-400 rounded-full flex items-center justify-center">
-                          <span className="text-white text-2xl">🍽️</span>
-                        </div>
-                        <p className="font-medium text-gray-800 text-sm">Все блюда</p>
-                      </CardContent>
-                    </Card>
-                  </CarouselItem>
-                  
-                  {categories.map((category) => (
-                    <CarouselItem key={category.id} className="pl-2 md:pl-4 basis-1/3">
-                      <Card 
-                        className={`cursor-pointer transition-all duration-300 ${
-                          selectedCategory === category.id 
-                            ? 'ring-2 ring-orange-500 shadow-lg' 
-                            : 'hover:shadow-md'
-                        }`}
-                        onClick={() => handleCategoryClick(category.id)}
-                      >
-                        <CardContent className="p-4 text-center">
-                          <div className="w-12 h-12 mx-auto mb-2 overflow-hidden rounded-full">
-                            {category.image ? (
-                              <img 
-                                src={category.image} 
-                                alt={category.name}
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              <div className="w-full h-full bg-gradient-to-r from-orange-400 to-red-400 flex items-center justify-content-center">
-                                <span className="text-white text-xl">📂</span>
-                              </div>
-                            )}
+                <Card 
+                  className={`flex-shrink-0 cursor-pointer transition-all duration-300 ${
+                    selectedCategory === 'all' 
+                      ? 'ring-2 ring-orange-500 shadow-lg' 
+                      : 'hover:shadow-md'
+                  }`}
+                  onClick={() => handleCategoryClick('all')}
+                >
+                  <CardContent className="p-4 text-center min-w-[100px]">
+                    <div className="w-12 h-12 mx-auto mb-2 bg-gradient-to-r from-orange-400 to-red-400 rounded-full flex items-center justify-center">
+                      <span className="text-white text-2xl">🍽️</span>
+                    </div>
+                    <p className="font-medium text-gray-800 text-sm whitespace-nowrap">Все блюда</p>
+                  </CardContent>
+                </Card>
+                
+                {categories.map((category) => (
+                  <Card 
+                    key={category.id}
+                    className={`flex-shrink-0 cursor-pointer transition-all duration-300 ${
+                      selectedCategory === category.id 
+                        ? 'ring-2 ring-orange-500 shadow-lg' 
+                        : 'hover:shadow-md'
+                    }`}
+                    onClick={() => handleCategoryClick(category.id)}
+                  >
+                    <CardContent className="p-4 text-center min-w-[100px]">
+                      <div className="w-12 h-12 mx-auto mb-2 overflow-hidden rounded-full">
+                        {category.image ? (
+                          <img 
+                            src={category.image} 
+                            alt={category.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-r from-orange-400 to-red-400 flex items-center justify-center">
+                            <span className="text-white text-xl">📂</span>
                           </div>
-                          <p className="font-medium text-gray-800 text-sm">{category.name}</p>
-                        </CardContent>
-                      </Card>
-                    </CarouselItem>
-                  ))}
-                </CarouselContent>
-                <CarouselPrevious className="hidden" />
-                <CarouselNext className="hidden" />
-              </Carousel>
+                        )}
+                      </div>
+                      <p className="font-medium text-gray-800 text-sm whitespace-nowrap">{category.name}</p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
             </div>
 
             {/* Desktop grid */}

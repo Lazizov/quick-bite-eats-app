@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { Trash2, Plus, Eye, EyeOff } from 'lucide-react';
+import { Trash2, Plus } from 'lucide-react';
 import type { Json } from '@/integrations/supabase/types';
 
 interface Category {
@@ -41,6 +41,7 @@ interface Order {
 
 export default function AdminPanel() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [loginForm, setLoginForm] = useState({ username: '', password: '' });
   const [categories, setCategories] = useState<Category[]>([]);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
@@ -66,25 +67,50 @@ export default function AdminPanel() {
   });
 
   useEffect(() => {
-    const loginStatus = sessionStorage.getItem('adminLoggedIn');
-    if (loginStatus === 'true') {
-      setIsLoggedIn(true);
-      loadData();
-    }
+    checkLoginStatus();
   }, []);
 
+  const checkLoginStatus = () => {
+    console.log('Checking login status...');
+    const loginStatus = localStorage.getItem('adminLoggedIn');
+    console.log('Login status from localStorage:', loginStatus);
+    
+    if (loginStatus === 'true') {
+      console.log('User is logged in, loading data...');
+      setIsLoggedIn(true);
+      loadData();
+    } else {
+      console.log('User is not logged in');
+      setIsLoading(false);
+    }
+  };
+
   const loadData = async () => {
-    await Promise.all([loadCategories(), loadMenuItems(), loadOrders()]);
+    console.log('Loading all data...');
+    setIsLoading(true);
+    try {
+      await Promise.all([loadCategories(), loadMenuItems(), loadOrders()]);
+    } catch (error) {
+      console.error('Error loading data:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const loadCategories = async () => {
     try {
+      console.log('Loading categories...');
       const { data, error } = await supabase
         .from('categories')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error loading categories:', error);
+        throw error;
+      }
+      
+      console.log('Categories loaded:', data?.length || 0);
       setCategories(data || []);
     } catch (error) {
       console.error('Error loading categories:', error);
@@ -98,12 +124,18 @@ export default function AdminPanel() {
 
   const loadMenuItems = async () => {
     try {
+      console.log('Loading menu items...');
       const { data, error } = await supabase
         .from('menu_items')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error loading menu items:', error);
+        throw error;
+      }
+      
+      console.log('Menu items loaded:', data?.length || 0);
       setMenuItems(data || []);
     } catch (error) {
       console.error('Error loading menu items:', error);
@@ -117,12 +149,18 @@ export default function AdminPanel() {
 
   const loadOrders = async () => {
     try {
+      console.log('Loading orders...');
       const { data, error } = await supabase
         .from('restaurant_orders')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error loading orders:', error);
+        throw error;
+      }
+      
+      console.log('Orders loaded:', data?.length || 0);
       setOrders(data || []);
     } catch (error) {
       console.error('Error loading orders:', error);
@@ -134,29 +172,49 @@ export default function AdminPanel() {
     }
   };
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    console.log('Login attempt with:', loginForm.username);
+    
+    if (!loginForm.username.trim() || !loginForm.password.trim()) {
+      toast({
+        title: 'Ошибка',
+        description: 'Заполните все поля',
+        variant: 'destructive'
+      });
+      return;
+    }
+
     if (loginForm.username === 'admin' && loginForm.password === 'admin') {
+      console.log('Login successful!');
+      localStorage.setItem('adminLoggedIn', 'true');
       setIsLoggedIn(true);
-      sessionStorage.setItem('adminLoggedIn', 'true');
-      loadData();
+      await loadData();
       toast({
         title: 'Успешно',
         description: 'Добро пожаловать в админ панель!'
       });
     } else {
+      console.log('Login failed - incorrect credentials');
       toast({
         title: 'Ошибка',
         description: 'Неверный логин или пароль',
         variant: 'destructive'
       });
+      // Clear the form
+      setLoginForm({ username: '', password: '' });
     }
   };
 
   const handleLogout = () => {
+    console.log('Logging out...');
+    localStorage.removeItem('adminLoggedIn');
     setIsLoggedIn(false);
-    sessionStorage.removeItem('adminLoggedIn');
     setLoginForm({ username: '', password: '' });
+    setCategories([]);
+    setMenuItems([]);
+    setOrders([]);
   };
 
   const handleAddCategory = async (e: React.FormEvent) => {
@@ -341,12 +399,25 @@ export default function AdminPanel() {
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Загрузка...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (!isLoggedIn) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <Card className="w-full max-w-md">
           <CardHeader>
-            <CardTitle className="text-center">🔐 Админ панель</CardTitle>
+            <CardTitle className="text-center flex items-center justify-center gap-2">
+              🔐 Админ панель
+            </CardTitle>
             <p className="text-center text-gray-600">Авторизация для доступа к панели управления</p>
           </CardHeader>
           <CardContent>
@@ -360,6 +431,7 @@ export default function AdminPanel() {
                   onChange={(e) => setLoginForm(prev => ({ ...prev, username: e.target.value }))}
                   placeholder="Введите логин"
                   required
+                  autoComplete="username"
                 />
               </div>
               <div>
@@ -371,6 +443,7 @@ export default function AdminPanel() {
                   onChange={(e) => setLoginForm(prev => ({ ...prev, password: e.target.value }))}
                   placeholder="Введите пароль"
                   required
+                  autoComplete="current-password"
                 />
               </div>
               <Button type="submit" className="w-full">Войти</Button>
