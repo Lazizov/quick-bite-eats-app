@@ -6,7 +6,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Badge } from '@/components/ui/badge';
 import { ShoppingCart, Plus, Minus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface Category {
   id: string;
@@ -45,10 +44,12 @@ const RestaurantMenu = () => {
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     loadData();
+    loadCartFromStorage();
   }, []);
 
   useEffect(() => {
@@ -63,32 +64,37 @@ const RestaurantMenu = () => {
   useEffect(() => {
     if (scrollRef.current && categories.length > 0) {
       const scrollContainer = scrollRef.current;
-      let scrollAmount = 0;
-      const scrollStep = 1;
-      const scrollDelay = 50;
+      let scrollPosition = 0;
+      let direction = 1;
+      const scrollSpeed = 0.5;
+      let isPaused = false;
       
       const autoScroll = () => {
-        if (scrollContainer) {
-          scrollAmount += scrollStep;
-          if (scrollAmount >= scrollContainer.scrollWidth - scrollContainer.clientWidth) {
-            scrollAmount = 0;
+        if (!isPaused && scrollContainer) {
+          scrollPosition += scrollSpeed * direction;
+          
+          const maxScroll = scrollContainer.scrollWidth - scrollContainer.clientWidth;
+          
+          if (scrollPosition >= maxScroll) {
+            direction = -1;
+          } else if (scrollPosition <= 0) {
+            direction = 1;
           }
+          
           scrollContainer.scrollTo({
-            left: scrollAmount,
+            left: scrollPosition,
             behavior: 'smooth'
           });
         }
       };
 
-      const intervalId = setInterval(autoScroll, scrollDelay);
+      const intervalId = setInterval(autoScroll, 50);
       
-      // Pause auto-scroll on user interaction
       const handleUserInteraction = () => {
-        clearInterval(intervalId);
+        isPaused = true;
         setTimeout(() => {
-          const newIntervalId = setInterval(autoScroll, scrollDelay);
-          return () => clearInterval(newIntervalId);
-        }, 3000); // Resume after 3 seconds
+          isPaused = false;
+        }, 3000);
       };
 
       scrollContainer.addEventListener('touchstart', handleUserInteraction);
@@ -107,6 +113,9 @@ const RestaurantMenu = () => {
   const loadData = async () => {
     try {
       setLoading(true);
+      setError(null);
+      
+      console.log('Loading categories and menu items...');
       
       // Load categories
       const { data: categoriesData, error: categoriesError } = await supabase
@@ -116,11 +125,13 @@ const RestaurantMenu = () => {
 
       if (categoriesError) {
         console.error('Error loading categories:', categoriesError);
+        setError('Ошибка загрузки категорий');
       } else {
+        console.log('Categories loaded:', categoriesData);
         setCategories(categoriesData || []);
       }
 
-      // Load menu items with category information - include created_at from categories
+      // Load menu items with category information
       const { data: menuItemsData, error: menuItemsError } = await supabase
         .from('menu_items')
         .select(`
@@ -136,21 +147,48 @@ const RestaurantMenu = () => {
 
       if (menuItemsError) {
         console.error('Error loading menu items:', menuItemsError);
+        setError('Ошибка загрузки блюд');
       } else {
+        console.log('Menu items loaded:', menuItemsData);
         setMenuItems(menuItemsData || []);
       }
     } catch (error) {
       console.error('Error loading data:', error);
+      setError('Ошибка подключения к базе данных');
     } finally {
       setLoading(false);
     }
   };
 
+  const loadCartFromStorage = () => {
+    try {
+      const savedCart = localStorage.getItem('restaurantCart');
+      if (savedCart) {
+        const parsedCart = JSON.parse(savedCart);
+        if (Array.isArray(parsedCart)) {
+          setCart(parsedCart);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading cart from storage:', error);
+    }
+  };
+
+  const saveCartToStorage = (cartData: CartItem[]) => {
+    try {
+      localStorage.setItem('restaurantCart', JSON.stringify(cartData));
+    } catch (error) {
+      console.error('Error saving cart to storage:', error);
+    }
+  };
+
   const handleCategoryClick = (categoryId: string) => {
+    console.log('Category clicked:', categoryId);
     setSelectedCategory(categoryId);
   };
 
   const openModal = (item: MenuItem) => {
+    console.log('Opening modal for item:', item);
     setSelectedItem(item);
     setQuantity(1);
     setIsModalOpen(true);
@@ -165,14 +203,18 @@ const RestaurantMenu = () => {
   const addToCart = () => {
     if (!selectedItem) return;
 
+    console.log('Adding to cart:', selectedItem, 'quantity:', quantity);
+
     const existingItem = cart.find(item => item.id === selectedItem.id);
     
+    let newCart: CartItem[];
+    
     if (existingItem) {
-      setCart(cart.map(item => 
+      newCart = cart.map(item => 
         item.id === selectedItem.id 
           ? { ...item, quantity: item.quantity + quantity }
           : item
-      ));
+      );
     } else {
       const newCartItem: CartItem = {
         id: selectedItem.id,
@@ -181,10 +223,43 @@ const RestaurantMenu = () => {
         quantity: quantity,
         image: selectedItem.image
       };
-      setCart([...cart, newCartItem]);
+      newCart = [...cart, newCartItem];
     }
     
+    setCart(newCart);
+    saveCartToStorage(newCart);
+    
+    console.log('Cart updated:', newCart);
+    
     closeModal();
+    
+    // Show notification
+    showNotification(`${selectedItem.name} добавлен в корзину!`);
+  };
+
+  const showNotification = (message: string) => {
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #f39c12;
+      color: white;
+      padding: 15px 20px;
+      border-radius: 8px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+      z-index: 2000;
+      animation: slideInRight 0.3s ease-out;
+    `;
+    notification.textContent = message;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+      if (document.body.contains(notification)) {
+        document.body.removeChild(notification);
+      }
+    }, 3000);
   };
 
   const getTotalItems = () => {
@@ -195,12 +270,35 @@ const RestaurantMenu = () => {
     document.getElementById('menu')?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  const handleCartClick = () => {
+    console.log('Cart clicked, items:', cart);
+    if (cart.length > 0) {
+      // Here you can implement cart page or modal
+      alert(`В корзине ${getTotalItems()} товаров`);
+    } else {
+      alert('Корзина пуста');
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
           <p className="text-gray-600">Загрузка меню...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">{error}</p>
+          <Button onClick={loadData} className="bg-orange-500 hover:bg-orange-600">
+            Попробовать снова
+          </Button>
         </div>
       </div>
     );
@@ -223,7 +321,7 @@ const RestaurantMenu = () => {
             </div>
             
             <Button 
-              onClick={() => console.log('Cart clicked')}
+              onClick={handleCartClick}
               className="relative bg-orange-500 hover:bg-orange-600"
             >
               <ShoppingCart className="w-5 h-5 mr-2" />
@@ -398,7 +496,7 @@ const RestaurantMenu = () => {
             ))}
           </div>
 
-          {filteredItems.length === 0 && (
+          {filteredItems.length === 0 && !loading && (
             <div className="text-center py-12">
               <p className="text-gray-500 text-lg">В данной категории пока нет блюд</p>
             </div>
