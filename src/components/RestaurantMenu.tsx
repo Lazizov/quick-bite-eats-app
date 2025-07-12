@@ -75,7 +75,7 @@ const RestaurantMenu = () => {
         setCategories(categoriesData || []);
       }
 
-      // Load menu items with category information
+      // Load menu items with category information - include created_at from categories
       const { data: menuItemsData, error: menuItemsError } = await supabase
         .from('menu_items')
         .select(`
@@ -83,7 +83,8 @@ const RestaurantMenu = () => {
           categories (
             id,
             name,
-            slug
+            slug,
+            created_at
           )
         `)
         .order('created_at', { ascending: true });
