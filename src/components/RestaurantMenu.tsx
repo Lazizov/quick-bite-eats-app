@@ -265,11 +265,6 @@ const RestaurantMenu = () => {
               <div 
                 ref={scrollRef}
                 className="flex gap-4 overflow-x-auto scrollbar-hide pb-4"
-                style={{
-                  scrollbarWidth: 'none',
-                  msOverflowStyle: 'none',
-                  WebkitScrollbar: { display: 'none' }
-                }}
               >
                 <Card 
                   className={`flex-shrink-0 cursor-pointer transition-all duration-300 ${
